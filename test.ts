@@ -33,11 +33,11 @@ class DirectionalView {
 }
 
 class ElevatedPoint {
-  location: Location
+  location: GeoLocation
   elevation: number
   distance_to_central_location: number;
   
-  constructor(location: Location, elevation: number, distance: number) {
+  constructor(location: GeoLocation, elevation: number, distance: number) {
     this.location = location;
     this.elevation = elevation;
     this.distance_to_central_location = distance;
@@ -57,16 +57,44 @@ class RidgeCandidatePoint {
 // indexed by directions
 type Ridge = Array<ElevatedPoint>
 
-//todo implement it!
-interface Location {
-  lat, lon: number
-  // distance is in meters
-  move_lat(distance: number)
-  // distance is in meters
-  move_lon(distance: number)
+const R = 6371;// earth radius in km
+const deg2rad = (deg) => deg * Math.PI/180; 
+
+class GeoLocation {
+  lat: number
+  lon: number
+  constructor (lat, lon: number) {
+    this.lat = lat;
+    this.lon = lon;
+  }
+
+  // distance is in meters, moving north, south
+  move_lat(distance: number) {
+    // this does not depend on lon
+    // 1 deg ~ 111km
+    this.lat += 360*(distance/1000)/(2*Math.PI*R)
+  }
+
+  // distance is in meters, moving east,west
+  move_lon(distance: number) {
+    // this depends on the lat!
+    const lat_rad = R * Math.cos(deg2rad(this.lat));
+    this.lon += 360*(distance/1000)/(2*Math.PI*lat_rad)
+  }
 
   // distance in meters
-  distance_to(location: Location): number;
+  distance_to(location: GeoLocation): number {
+    const dLat = deg2rad(location.lat - this.lat);
+    const dLon = deg2rad(location.lon - this.lon);
+    
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) + 
+      Math.sin(deg2rad(this.lat)) * Math.cos(deg2rad(location.lat)) + 
+      Math.sin(dLon/2) * Math.sin(dLon/2) ;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const d = R * c;
+    return d * 1000;
+  }
 }
 
 class View {
@@ -78,16 +106,16 @@ class View {
   ridges: Ridge[];
   
   data_steps = 90;//when stepping one px in the elevation file we pass 90m
-  data: any;
-  location: Location;
+  data_source: any;
+  location: GeoLocation;
 
-  constructor(circle_resolution = 90, visual_range = 30000) {
+  constructor(data_source: any, circle_resolution = 90, visual_range = 30000) {
     this.circle_resolution = circle_resolution;
     this.visual_range = visual_range;
+    this.data_source = data_source;
   }
 
-  calculate_directional_view(data: any, location: Location): void {
-    this.data = data;
+  calculate_directional_view(location: GeoLocation): void {
     this.location = location;
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
@@ -99,18 +127,35 @@ class View {
   }
 
   //todo: connect the dots
+  // not strictly necessary at first
   build_ridges(): void {
 
   }
 
   //todo implement it!
-  get_elevation(location: Location): number {
+  get_elevation(location: GeoLocation): number {
     return 0
   }
 
-  //todo implement it!
-  get_direction(location: Location): number {
-    return 0
+  // returns a number between 0 and 4 * circle_resolution
+  get_direction(location: GeoLocation): number {
+    const distance =  this.location.distance_to(location);
+    const lat_dist = location.lat - this.location.lat;
+    const lon_dist = location.lon - this.location.lon;
+
+    let rad = 0;
+
+    if (lon_dist >= 0) {
+      rad = Math.asin(lat_dist/distance);
+    }
+    else {
+      rad = Math.PI - Math.asin((- lat_dist)/distance);
+    }
+    if (rad < 0) {
+      rad += 2 * Math.PI;
+    }
+    
+    return Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
   }
   
   init_directions(): void {
@@ -126,7 +171,7 @@ class View {
     }
   }
 
-  check_point(location: Location, pass: number) {
+  check_point(location: GeoLocation, pass: number) {
     const direction = this.get_direction(location);
     const elevation = this.get_elevation(location)
     if (elevation > this.directions[direction].highest_elevation) {
@@ -140,29 +185,29 @@ class View {
   }
 
   traverse_one_ring(distance: number): void {
-    const location = { ...this.location };
+    const location = new GeoLocation(this.location.lat, this.location.lon);
     //go to top left corner
     location.move_lat((- distance - 1) * this.data_steps);
     location.move_lon(-distance * this.data_steps);
     //move right
     for (let i=0; i<(2*i+1); i++) {
-      location.move_lat(this.data_steps);
+      location.move_lat(this.data_steps * distance);
       this.check_point(location, distance);
     }
     //move down
     for (let i=0; i<(2*i); i++) {
-      location.move_lon(this.data_steps, distance);
-      this.check_point(location);
+      location.move_lon(this.data_steps * distance);
+      this.check_point(location, distance);
     }
     //move left
     for (let i=0; i<(2*i); i++) {
-      location.move_lat(-this.data_steps, distance);
-      this.check_point(location);
+      location.move_lat(-this.data_steps * distance);
+      this.check_point(location, distance);
     }
     //move up
     for (let i=0; i<(2*i); i++) {
-      location.move_lon(-this.data_steps, distance);
-      this.check_point(location);
+      location.move_lon(-this.data_steps * distance);
+      this.check_point(location, distance);
     }
   }
   

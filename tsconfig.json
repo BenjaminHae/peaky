@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "preserveConstEnums": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*"]
+}

@@ -25,16 +25,23 @@ export default class GeoLocation {
 
   // distance in meters
   distance_to(location: GeoLocation): number {
-    const dLat = deg2rad(location.lat - this.lat);
-    const dLon = deg2rad(location.lon - this.lon);
+    const p1 = deg2rad(this.lat);
+    const p2 = deg2rad(location.lat);
+
+    const deltaLambda = deg2rad(location.lon - this.lon);
+    const d = Math.acos(
+        Math.sin(p1) * Math.sin(p2) + Math.cos(p1) * Math.cos(p2) * Math.cos(deltaLambda)
+      ) * R * 1000;
+    return d;
+  }
+
+  // returns the direction to location in radians
+  direction_to(location: GeoLocation: number {
     
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) + 
-      Math.sin(deg2rad(this.lat)) * Math.cos(deg2rad(location.lat)) + 
-      Math.sin(dLon/2) * Math.sin(dLon/2) ;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const d = R * c;
-    return d * 1000;
+  }
+
+  to_array(): Array<number> {
+    return [this.lat, this.lon];
   }
 }
 

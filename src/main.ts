@@ -1,6 +1,6 @@
 import GeoLocation from './geoLocation';
 import DataSource from './dataSource';
-import View from './test';
+import View from './view';
 import Canvas from './canvas';
 
 

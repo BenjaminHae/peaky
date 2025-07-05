@@ -12,7 +12,7 @@ async function main() {
   const dataSource = new DataSource(location, max_distance)
   await dataSource.init_tileset();
   
-  const view = new View(dataSource, 90, max_distance);
+  const view = new View(dataSource, 360, max_distance);
   view.calculate_directional_view(location);
 
   const min_height = Math.min(...view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))

@@ -75,7 +75,7 @@ export default class View {
   data_source: { get_elevation(lat, lon: number) };
   location: GeoLocation;
 
-  constructor(data_source: any, circle_resolution = 90, visual_range = 30000) {
+  constructor(data_source: any, circle_resolution = 360, visual_range = 30000) {
     this.circle_resolution = circle_resolution;
     this.visual_range = visual_range;
     this.data_source = data_source;
@@ -95,6 +95,9 @@ export default class View {
   //todo: connect the dots
   // not strictly necessary at first
   build_ridges(): void {
+    for (let i = 0; i <= (this.circle_resolution); i++) {
+       
+    }
 
   }
 
@@ -103,25 +106,25 @@ export default class View {
     return this.data_source.get_elevation(location.lat, location.lon);
   }
 
-  // returns a number between 0 and 4 * circle_resolution
+  // returns a number between 0 and circle_resolution
   get_direction(location: GeoLocation): number {
     const rad = this.location.direction_to(location)
-    let dir = Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
+    let dir = Math.floor((this.circle_resolution) * rad / (2 * Math.PI) )
     if (dir < 0) {
-      dir += (4 * this.circle_resolution);
+      dir += (this.circle_resolution);
     }
     return dir;
   }
   
   init_directions(): void {
     this.directions = [];
-    for (let i = 0; i < 4 * this.circle_resolution; i++) {
+    for (let i = 0; i < this.circle_resolution; i++) {
       this.directions[i] = new DirectionalView();
     }
   }
 
   finish_directions(pass): void {
-    for (let i = 0; i < 4 * this.circle_resolution; i++) {
+    for (let i = 0; i < this.circle_resolution; i++) {
       this.directions[i].capture_last_ridge(pass);
     }
   }

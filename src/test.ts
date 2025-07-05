@@ -10,6 +10,7 @@ class DirectionalView {
      this.highest_elevation = 0
    }
 
+   //distance and elevation in meters
    add_possible_ridge_point(location, elevation, distance, pass: number): void {
      if (elevation > this.highest_elevation) {
        this.highest_elevation = elevation;
@@ -38,6 +39,7 @@ class DirectionalView {
 class ElevatedPoint {
   location: GeoLocation
   elevation: number
+  // in meters
   distance_to_central_location: number;
   
   constructor(location: GeoLocation, elevation: number, distance: number) {
@@ -83,7 +85,7 @@ export default class View {
     this.location = location;
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
-    for (let i = 1; i < max_pass ; i++) {
+    for (let i = 40; i < max_pass ; i++) {
       this.traverse_one_ring(i);
     }
     this.finish_directions(max_pass);

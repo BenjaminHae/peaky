@@ -36,8 +36,15 @@ export default class GeoLocation {
   }
 
   // returns the direction to location in radians
-  direction_to(location: GeoLocation: number {
-    
+  direction_to(location: GeoLocation): number {
+    // https://math.stackexchange.com/questions/3812110/calculation-of-direction-between-two-geographical-points
+    const latA = deg2rad(this.lat)
+    const latB = deg2rad(location.lat)
+    const lonA = deg2rad(this.lon)
+    const lonB = deg2rad(location.lon)
+    const delta_phi = Math.log( Math.tan( latB /2 + Math.PI /4) / Math.tan(latA / 2 + Math.PI / 4))
+    const delta_lon = Math.abs( lonA - lonB )
+    return Math.atan2(delta_lon, delta_phi);
   }
 
   to_array(): Array<number> {

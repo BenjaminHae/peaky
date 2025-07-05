@@ -2,7 +2,10 @@
   "compilerOptions": {
     "module": "commonjs",
     "preserveConstEnums": true,
-    "sourceMap": true
+    "lib": [ "es2015", "dom" ],
+    "sourceMap": true,
+    "outDir": "dist"
+
   },
   "include": ["src/**/*"]
 }

@@ -1,4 +1,5 @@
 import GeoLocation from './geoLocation';
+
 class DirectionalView {
    ridges: ElevatedPoint[]
    highest_elevation: number;
@@ -19,6 +20,7 @@ class DirectionalView {
        this.candidate = new RidgeCandidatePoint(new ElevatedPoint(location, elevation, distance), pass)
      }
    }
+
    add_ridge_point(ridge_point: ElevatedPoint): void {
      this.ridges.push(ridge_point);
      if (ridge_point.elevation > this.highest_elevation) {
@@ -59,7 +61,7 @@ class RidgeCandidatePoint {
 type Ridge = Array<ElevatedPoint>
 
 
-class View {
+export default class View {
   // will be multiplied by 4 to separate the circle into sectors
   circle_resolution: number;
   // visibility in m
@@ -68,7 +70,7 @@ class View {
   ridges: Ridge[];
   
   data_steps = 90;//when stepping one px in the elevation file we pass 90m
-  data_source: any;
+  data_source: { get_elevation(lat, lon: number) };
   location: GeoLocation;
 
   constructor(data_source: any, circle_resolution = 90, visual_range = 30000) {
@@ -96,7 +98,7 @@ class View {
 
   //todo implement it!
   get_elevation(location: GeoLocation): number {
-    return 0
+    return this.data_source.get_elevation(location.lat, location.lon);
   }
 
   // returns a number between 0 and 4 * circle_resolution
@@ -172,7 +174,6 @@ class View {
       this.check_point(location, distance);
     }
   }
-  
 
 }
 

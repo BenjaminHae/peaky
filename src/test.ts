@@ -104,8 +104,10 @@ export default class View {
   // returns a number between 0 and 4 * circle_resolution
   get_direction(location: GeoLocation): number {
     const rad = this.location.direction_to(location)
-    const dir = Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
-    console.log(`${location.to_array()}, rad: ${rad}, ${dir}`);
+    let dir = Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
+    if (dir < 0) {
+      dir += (4 * this.circle_resolution);
+    }
     return dir;
   }
   

@@ -43,7 +43,7 @@ export default class GeoLocation {
     const lonA = deg2rad(this.lon)
     const lonB = deg2rad(location.lon)
     const delta_phi = Math.log( Math.tan( latB /2 + Math.PI /4) / Math.tan(latA / 2 + Math.PI / 4))
-    const delta_lon = Math.abs( lonA - lonB )
+    const delta_lon = lonA - lonB
     return Math.atan2(delta_lon, delta_phi);
   }
 

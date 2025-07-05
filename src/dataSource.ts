@@ -6,17 +6,17 @@ export default class DataSource {
   tileset: SyncTileSet;
   maxPoint: GeoLocation;
   minPoint: GeoLocation;
+  central_location: GeoLocation;
 
   // distance is in meters
   constructor(central_location: GeoLocation, distance: number) {
+    this.central_location = central_location;
     this.minPoint = new GeoLocation(central_location.lat, central_location.lon);
     this.minPoint.move_lat(-distance);
     this.minPoint.move_lon(-distance);
     this.maxPoint = new GeoLocation(central_location.lat, central_location.lon);
     this.maxPoint.move_lat(distance);
     this.maxPoint.move_lon(distance);
-    console.log(this.minPoint);
-    console.log(this.maxPoint);
   }
   
   async init_tileset(): Promise<void> {
@@ -31,8 +31,6 @@ export default class DataSource {
             reject(err); 
             return 
           } 
-          console.log(this.tileset.getElevation([central_location.lat, central_location.lon]));
-          console.log(this.get_elevation(central_location.lat, central_location.lon));
           resolve(); 
         });
     });
@@ -40,7 +38,6 @@ export default class DataSource {
   
   get_elevation(lat, lon: number): number {
     const elev = this.tileset.getElevation([lat,lon]);
-    console.log(elev);
     return elev;
   }
 }

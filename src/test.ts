@@ -14,7 +14,7 @@ class DirectionalView {
      if (elevation > this.highest_elevation) {
        this.highest_elevation = elevation;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
-       if (this.candidate && (this.candidate.pass - pass) > 1) {
+       if (this.candidate && (pass - this.candidate.pass) > 1) {
          this.add_ridge_point(this.candidate.point);
        }
        this.candidate = new RidgeCandidatePoint(new ElevatedPoint(location, elevation, distance), pass)
@@ -29,7 +29,7 @@ class DirectionalView {
    }
    
    capture_last_ridge(pass: number): void {
-     if (this.candidate && (this.candidate.pass - pass) > 1) {
+     if (this.candidate && (pass - this.candidate.pass) > 1) {
        this.add_ridge_point(this.candidate.point);
      }
    }
@@ -113,13 +113,15 @@ export default class View {
       rad = Math.asin(lat_dist/distance);
     }
     else {
-      rad = Math.PI - Math.asin((- lat_dist)/distance);
+      rad = Math.PI - Math.asin(- lat_dist/distance);
     }
     if (rad < 0) {
       rad += 2 * Math.PI;
     }
     
-    return Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
+    const dir = Math.floor((4 * this.circle_resolution) * rad / (2 * Math.PI) )
+    console.log(`${lat_dist}, ${lon_dist}, distance: ${distance}, rad: ${rad}, ${dir}`);
+    return dir;
   }
   
   init_directions(): void {
@@ -149,28 +151,29 @@ export default class View {
   }
 
   traverse_one_ring(distance: number): void {
+    console.log(`pass ${distance}`);
     const location = new GeoLocation(this.location.lat, this.location.lon);
     //go to top left corner
-    location.move_lat((- distance - 1) * this.data_steps);
-    location.move_lon(-distance * this.data_steps);
+    location.move_lat( (- distance - 1) * this.data_steps);
+    location.move_lon( (- distance ) * this.data_steps);
     //move right
-    for (let i=0; i<(2*i+1); i++) {
-      location.move_lat(this.data_steps * distance);
+    for (let i=0; i<((2*distance -1)+2); i++) {
+      location.move_lat(this.data_steps);
       this.check_point(location, distance);
     }
     //move down
-    for (let i=0; i<(2*i); i++) {
-      location.move_lon(this.data_steps * distance);
+    for (let i=0; i<((2*distance -1)+1); i++) {
+      location.move_lon(this.data_steps);
       this.check_point(location, distance);
     }
     //move left
-    for (let i=0; i<(2*i); i++) {
-      location.move_lat(-this.data_steps * distance);
+    for (let i=0; i<((2*distance -1)+1); i++) {
+      location.move_lat(-this.data_steps);
       this.check_point(location, distance);
     }
     //move up
-    for (let i=0; i<(2*i); i++) {
-      location.move_lon(-this.data_steps * distance);
+    for (let i=0; i<((2*distance -1)); i++) {
+      location.move_lon(-this.data_steps);
       this.check_point(location, distance);
     }
   }

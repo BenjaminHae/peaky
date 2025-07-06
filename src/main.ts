@@ -7,7 +7,7 @@ import Canvas from './canvas';
 async function main() {
   // test using St. Gallenkirch with a distance of 30km
   const location = new GeoLocation(47.020174, 9.978751);// St. Gallenkirch
-  const max_distance = 30 * 1000;
+  const max_distance = 50 * 1000;
   
   const dataSource = new DataSource(location, max_distance)
   await dataSource.init_tileset();
@@ -19,9 +19,13 @@ async function main() {
   const max_height = Math.max(...view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
   console.log(`found elevations from ${min_height} to ${max_height}, and ${view.ridges.length} ridges`);
   
-  const width_factor = 80;
+  const width_factor = 20;
   const canvas = new Canvas(360, max_height-min_height, width_factor);
 
+  canvas.paintDirection("N", 0);
+  canvas.paintDirection("O", 90);
+  canvas.paintDirection("S", 180);
+  canvas.paintDirection("W", 270);
   for (let i=0; i< 360; i++) {
     for (let item of view.directions[i].ridges) {
       canvas.paintDot(i, item.elevation - min_height, 10);

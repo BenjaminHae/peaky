@@ -29,16 +29,33 @@ export default class Canvas {
     //    ${Math.floor(255 - 42.5 * distance/max_distance)}
     //    ${Math.floor(255 - 42.5 * j)}
     //    0)`;
+    this.context.fillStyle = "black";
     this.context.fillRect(x*this.scaling,y,size,size);
   }
   
   paintLine(points: Array<Point>) {
+    this.context.fillStyle = "black";
     this.context.beginPath();
     this.context.moveTo(points[0].x * this.scaling, points[0].y);
     for (let i = 1; i < points.length; i++) {
       this.context.lineTo(points[i].x * this.scaling, points[i].y);
     }
     this.context.stroke();
+  }
+
+  paintDirection(name: string, position: number, size = 20) {
+    this.context.fillStyle = "red";
+    this.context.beginPath();
+    this.context.moveTo(position * this.scaling, 0);
+    this.context.lineTo(position * this.scaling + size, 2 * size);
+    this.context.lineTo(position * this.scaling - size, 2 * size);
+    this.context.fill();
+    this.context.font = `${3*size}px serif`;
+    this.context.textAlign = 'center';
+    this.context.fillText(name, position * this.scaling, 5 * size + 1);
+    if (position == 0) {
+      this.paintDirection(name, this.width, size);
+    }
   }
   
   store(path: string) {

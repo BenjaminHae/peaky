@@ -17,15 +17,19 @@ async function main() {
 
   const min_height = Math.min(...view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
   const max_height = Math.max(...view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
-  console.log(`found elevations from ${min_height} to ${max_height}`);
+  console.log(`found elevations from ${min_height} to ${max_height}, and ${view.ridges.length} ridges`);
   
-  const width_factor = 20;
-  const canvas = new Canvas(360*width_factor, max_height-min_height);
+  const width_factor = 80;
+  const canvas = new Canvas(360, max_height-min_height, width_factor);
 
   for (let i=0; i< 360; i++) {
     for (let item of view.directions[i].ridges) {
-      canvas.paintDot(i, item.elevation - min_height, width_factor);
+      canvas.paintDot(i, item.elevation - min_height, 10);
     }
+  }
+  
+  for (let item of view.ridges) {
+    canvas.paintLine(item.map(point => { return {x: point.direction, y: point.point.elevation-min_height}}));
   }
   
   canvas.store('./test.png')

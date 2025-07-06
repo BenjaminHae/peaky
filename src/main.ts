@@ -2,6 +2,7 @@ import GeoLocation from './geoLocation';
 import DataSource from './dataSource';
 import View from './view';
 import Canvas from './canvas';
+import OsmMapper from './osm_mapper';
 
 
 async function main() {
@@ -18,7 +19,7 @@ async function main() {
   const min_height = Math.min(...view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
   const max_height = Math.max(...view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
   console.log(`found elevations from ${min_height} to ${max_height}, and ${view.ridges.length} ridges`);
-  
+
   const width_factor = 20;
   const canvas = new Canvas(360, max_height-min_height, width_factor);
 
@@ -26,15 +27,23 @@ async function main() {
   canvas.paintDirection("O", 90);
   canvas.paintDirection("S", 180);
   canvas.paintDirection("W", 270);
+
+  const osm_mapper = new OsmMapper(300);
+
   for (let i=0; i< 360; i++) {
     for (let item of view.directions[i].ridges) {
       canvas.paintDot(i, item.elevation - min_height, 10);
+      const peak = osm_mapper.get_peak_for_coordinates(item.location);
+      if (peak) {
+        console.log(peak);
+      }
     }
   }
   
   for (let item of view.ridges) {
     canvas.paintLine(item.map(point => { return {x: point.direction, y: point.point.elevation-min_height}}));
   }
+
   
   canvas.store('./test.png')
 }

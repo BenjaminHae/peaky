@@ -8,10 +8,10 @@ class DirectionalView {
    highest_elevation_rise: number;
    candidate: RidgeCandidatePoint;
 
-   constructor(central_location_elevation: number){
+   constructor(central_location_elevation: number) {
      this.ridges = []
      this.highest_elevation = 0
-     this.highest_elevation_rise = 0
+     this.highest_elevation_rise = -1000
      this.central_location_elevation = central_location_elevation
    }
 

@@ -2,18 +2,24 @@ import GeoLocation from './geoLocation';
 
 class DirectionalView {
    ridges: ElevatedPoint[]
+   central_location_elevation: number;
    highest_elevation: number;
+   // rise per meter from the elevation of the central location to the point of highest elevation so far
+   highest_elevation_rise: number;
    candidate: RidgeCandidatePoint;
 
-   constructor(){
+   constructor(central_location_elevation: number){
      this.ridges = []
      this.highest_elevation = 0
+     this.highest_elevation_rise = 0
+     this.central_location_elevation = central_location_elevation
    }
 
    //distance and elevation in meters
    add_possible_ridge_point(location, elevation, distance, pass: number): void {
-     if (elevation > this.highest_elevation) {
+     if ((this.central_location_elevation + this.highest_elevation_rise * distance) < elevation) {
        this.highest_elevation = elevation;
+       this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
        if (this.candidate && (pass - this.candidate.pass) > 1) {
          this.add_ridge_point(this.candidate.point);
@@ -91,6 +97,7 @@ export default class View {
   data_steps = 90;//when stepping one px in the elevation file we pass 90m
   data_source: { get_elevation(lat, lon: number) };
   location: GeoLocation;
+  elevation: number;
 
   constructor(data_source: any, circle_resolution = 360, visual_range = 30000) {
     this.circle_resolution = circle_resolution;
@@ -98,8 +105,14 @@ export default class View {
     this.data_source = data_source;
   }
 
-  calculate_directional_view(location: GeoLocation): void {
+  calculate_directional_view(location: GeoLocation, elevation?: number): void {
     this.location = location;
+    if(!elevation) {
+      this.elevation = Math.max(this.get_elevation(this.location), 0);
+    }
+    else {
+      this.elevation = elevation;
+    }
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
     for (let i = 40; i < max_pass ; i++) {
@@ -111,15 +124,19 @@ export default class View {
 
   find_next_directions_ridge_connector_index(next_direction: number, point: ElevatedPoint): string|null {
     //todo, the acceptable maximum distance must also depend on the distance of the points to the current center location
-    const max_height_diff = 100;
-    const max_location_diff = 500;
+    const max_height_diff = 200;
+    //const max_location_diff = 500;
+    // allow a distance between two points that allows for two points that are on the edges of two adjacent circle segments
+    // currently we allow for 2 times the width of the circle segment, however as one might be nearer to the center
+    // maybe we need to allow 2*sqrt(2)
+    const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * 2 * 1.4 / this.circle_resolution;
     let best_fit: ElevatedPoint;
     let best_fit_index: string|null = null;
     let best_fit_distance = max_location_diff;
     for (let ridge_point_index in this.directions[next_direction].ridges) {
       const new_point = this.directions[next_direction].ridges[ridge_point_index];
       if (new_point) {
-        if (Math.abs(point.elevation - new_point.elevation) < max_height_diff) {
+        /*if (Math.abs(point.elevation - new_point.elevation) < max_height_diff)*/ {
           const dist = point.location.distance_to(new_point.location);
           if (dist < max_location_diff && dist < best_fit_distance) {
             best_fit = new_point;
@@ -147,7 +164,7 @@ export default class View {
           if (next_index) {
             // take this point and delete it from this directions list (so it does not appear in two ridges)
             let next_point = this.directions[i+1].ridges[next_index];
-            delete_from_array(this.directions[i+1].ridges, next_index);
+            //delete_from_array(this.directions[i+1].ridges, next_index);
             // create the ridge from the first two points
             const new_ridge = [new RidgePoint(ridge_start_point, i), new RidgePoint(next_point, i+1)];
             // now go looking for the next pints
@@ -155,13 +172,12 @@ export default class View {
               next_index = this.find_next_directions_ridge_connector_index(search_direction, next_point)
               if (next_index) {
                 next_point = this.directions[search_direction].ridges[next_index];
-                delete_from_array(this.directions[i+1].ridges, next_index);
+                //delete_from_array(this.directions[i+1].ridges, next_index);
                 new_ridge.push(new RidgePoint(next_point, search_direction));
               } else {
                 break;
               }
             }
-            
             this.ridges.push(new_ridge);
           }
         }
@@ -187,7 +203,7 @@ export default class View {
   init_directions(): void {
     this.directions = [];
     for (let i = 0; i < this.circle_resolution; i++) {
-      this.directions[i] = new DirectionalView();
+      this.directions[i] = new DirectionalView(this.elevation);
     }
   }
 

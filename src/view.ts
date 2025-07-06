@@ -59,8 +59,25 @@ class RidgeCandidatePoint {
 }
  
 
+class RidgePoint{
+  point: ElevatedPoint;
+  direction: number;
+  
+  constructor(point: ElevatedPoint, direction: number) {
+    this.point = point;
+    this.direction = direction;
+  }
+}
+
 // indexed by directions
-type Ridge = Array<ElevatedPoint>
+type Ridge = Array<RidgePoint>
+
+function delete_from_array(myArray: Array<any>, key: string) {
+  const index = myArray.indexOf(key, 0);
+  if (index > -1) {
+     myArray.splice(index, 1);
+  }
+}
 
 
 export default class View {
@@ -92,13 +109,64 @@ export default class View {
     this.build_ridges();
   }
 
+  find_next_directions_ridge_connector_index(next_direction: number, point: ElevatedPoint): string|null {
+    //todo, the acceptable maximum distance must also depend on the distance of the points to the current center location
+    const max_height_diff = 100;
+    const max_location_diff = 500;
+    let best_fit: ElevatedPoint;
+    let best_fit_index: string|null = null;
+    let best_fit_distance = max_location_diff;
+    for (let ridge_point_index in this.directions[next_direction].ridges) {
+      const new_point = this.directions[next_direction].ridges[ridge_point_index];
+      if (new_point) {
+        if (Math.abs(point.elevation - new_point.elevation) < max_height_diff) {
+          const dist = point.location.distance_to(new_point.location);
+          if (dist < max_location_diff && dist < best_fit_distance) {
+            best_fit = new_point;
+            best_fit_index = ridge_point_index;
+            best_fit_distance = dist;
+          }
+        }
+      }
+    }
+    return best_fit_index;
+  }  
+
   //todo: connect the dots
   // not strictly necessary at first
+  // attention: currently build_ridges deletes points from the directions!
   build_ridges(): void {
-    for (let i = 0; i <= (this.circle_resolution); i++) {
-       
+    this.ridges = [];
+    for (let i = 0; i < (this.circle_resolution - 1); i++) {
+      for (let start_ridge_index in this.directions[i].ridges) {
+        // starting with a point that does not yet belong to a ridge:
+        const ridge_start_point = this.directions[i].ridges[start_ridge_index]; // attention, this point is currently not deleted, even if it is part of a ridge
+        if (ridge_start_point) {
+          // find a nearby point in the next direction
+          let next_index = this.find_next_directions_ridge_connector_index(i+1, ridge_start_point)
+          if (next_index) {
+            // take this point and delete it from this directions list (so it does not appear in two ridges)
+            let next_point = this.directions[i+1].ridges[next_index];
+            delete_from_array(this.directions[i+1].ridges, next_index);
+            // create the ridge from the first two points
+            const new_ridge = [new RidgePoint(ridge_start_point, i), new RidgePoint(next_point, i+1)];
+            // now go looking for the next pints
+            for (let search_direction = i+2; search_direction < this.circle_resolution; search_direction++) {
+              next_index = this.find_next_directions_ridge_connector_index(search_direction, next_point)
+              if (next_index) {
+                next_point = this.directions[search_direction].ridges[next_index];
+                delete_from_array(this.directions[i+1].ridges, next_index);
+                new_ridge.push(new RidgePoint(next_point, search_direction));
+              } else {
+                break;
+              }
+            }
+            
+            this.ridges.push(new_ridge);
+          }
+        }
+      }
     }
-
   }
 
   //todo implement it!
@@ -143,7 +211,6 @@ export default class View {
   }
 
   traverse_one_ring(distance: number): void {
-    console.log(`pass ${distance}`);
     const location = new GeoLocation(this.location.lat, this.location.lon);
     //go to top left corner
     location.move_lat( (- distance - 1) * this.data_steps);

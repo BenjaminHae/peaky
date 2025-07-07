@@ -42,7 +42,7 @@ class DirectionalView {
    }
 }
 
-class ElevatedPoint {
+export class ElevatedPoint {
   location: GeoLocation
   elevation: number
   // in meters
@@ -65,7 +65,7 @@ class RidgeCandidatePoint {
 }
  
 
-class RidgePoint{
+export class RidgePoint{
   point: ElevatedPoint;
   direction: number;
   
@@ -115,7 +115,7 @@ export default class View {
     }
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
-    for (let i = 40; i < max_pass ; i++) {
+    for (let i = 10; i < max_pass ; i++) {
       this.traverse_one_ring(i);
     }
     this.finish_directions(max_pass);
@@ -217,8 +217,9 @@ export default class View {
     const direction = this.get_direction(location);
     const elevation = this.get_elevation(location)
     if (elevation > this.directions[direction].highest_elevation) {
+      const new_location = new GeoLocation(location.lat, location.lon)
       this.directions[direction].add_possible_ridge_point(
-        location, 
+        new_location, 
         elevation, 
         this.location.distance_to(location),
         pass

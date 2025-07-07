@@ -10,11 +10,12 @@ async function main() {
   // test using St. Gallenkirch with a distance of 30km
   const location = new GeoLocation(47.020174, 9.978751);// St. Gallenkirch
   const max_distance = 50 * 1000;
+  const circle_precision = 720;
   
   const dataSource = new DataSource(location, max_distance)
   await dataSource.init_tileset();
   
-  const view = new View(dataSource, 360, max_distance);
+  const view = new View(dataSource, circle_precision, max_distance);
   view.calculate_directional_view(location);
 
   const min_height = Math.min(...view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
@@ -22,12 +23,12 @@ async function main() {
   console.log(`found elevations from ${min_height} to ${max_height}, and ${view.ridges.length} ridges`);
 
   const width_factor = 20;
-  const canvas = new Canvas(360, max_height-min_height, width_factor);
+  const canvas = new Canvas(circle_precision, max_height-min_height, 10);
 
   canvas.paintDirection("N", 0);
-  canvas.paintDirection("O", 90);
-  canvas.paintDirection("S", 180);
-  canvas.paintDirection("W", 270);
+  canvas.paintDirection("O", circle_precision / 4);
+  canvas.paintDirection("S", circle_precision / 2);
+  canvas.paintDirection("W", 3* circle_precision / 4 );
 
   const osm_mapper = new OsmMapper(300);
   const peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...view.directions.map(d => d.ridges)).map(e=>e.location));
@@ -37,7 +38,7 @@ async function main() {
     canvas.paintPeak(peak.name, peak.elevation - min_height, dir);
   }
  
-  for (let i=0; i< 360; i++) {
+  for (let i=0; i< circle_precision; i++) {
     for (let item of view.directions[i].ridges) {
       canvas.paintDot(i, item.elevation - min_height, 10);
     }

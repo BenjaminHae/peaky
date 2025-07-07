@@ -1,8 +1,9 @@
 import GeoLocation from './geoLocation';
 import DataSource from './dataSource';
-import View from './view';
+import View, {ElevatedPoint, RidgePoint} from './view';
 import Canvas from './canvas';
 import OsmMapper from './osm_mapper';
+import { geoJSONtoFile }  from './geoJSON';
 
 
 async function main() {
@@ -29,23 +30,25 @@ async function main() {
   canvas.paintDirection("W", 270);
 
   const osm_mapper = new OsmMapper(300);
-
+  const peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...view.directions.map(d => d.ridges)).map(e=>e.location));
+  
+  for (let peak of peaks) {
+    canvas.paintPeak(peak.name, peak.elevation, view.get_direction(peak.location));
+  }
+ 
   for (let i=0; i< 360; i++) {
     for (let item of view.directions[i].ridges) {
       canvas.paintDot(i, item.elevation - min_height, 10);
-      const peak = osm_mapper.get_peak_for_coordinates(item.location);
-      if (peak) {
-        console.log(peak);
-      }
     }
   }
-  
+
   for (let item of view.ridges) {
     canvas.paintLine(item.map(point => { return {x: point.direction, y: point.point.elevation-min_height}}));
   }
-
-  
   canvas.store('./test.png')
+
+  geoJSONtoFile(([] as Array<ElevatedPoint>).concat(...view.directions.map(d => d.ridges)).map(p=>p.location), 'directions.geojson');
+  geoJSONtoFile(([] as Array<RidgePoint>).concat(...view.ridges).map(p=>p.point.location), 'ridges.geojson');
 }
 
 main();

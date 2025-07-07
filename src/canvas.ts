@@ -65,7 +65,9 @@ export default class Canvas {
   paintPeak(name: string, elevation: number, direction): void {
     this.context.font = `$20px serif`;
     this.context.textAlign = 'center';
-    this.context.fillText(`${name}\r\n${elevation} m`, direction * this.scaling, this.invert_point(elevation) - 7 * 10 + 1);
+    //this.context.fillText(`${name}\n${elevation.toFixed(0)} m`, direction * this.scaling, this.invert_point(elevation) - 7 * 10 + 1);
+    this.context.fillText(`${name}`, direction * this.scaling, this.invert_point(elevation) - 7 * 10 + 1);
+    this.context.fillText(`${elevation.toFixed(0)} m`, direction * this.scaling, this.invert_point(elevation) - 1.5 * 10 + 1);
   }
   
   store(path: string) {

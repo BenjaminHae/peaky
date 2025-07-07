@@ -33,7 +33,8 @@ async function main() {
   const peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...view.directions.map(d => d.ridges)).map(e=>e.location));
   
   for (let peak of peaks) {
-    canvas.paintPeak(peak.name, peak.elevation, view.get_direction(peak.location));
+    const dir = view.get_direction(peak.location);
+    canvas.paintPeak(peak.name, peak.elevation - min_height, dir);
   }
  
   for (let i=0; i< 360; i++) {

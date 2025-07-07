@@ -5,9 +5,9 @@ class Peak {
   location: GeoLocation;
   elevation: number;
   name: string;
-  constructor(lat,lon: number, elevation: number, name: string) {
+  constructor(lat,lon: number, elevation: string|number, name: string) {
     this.location = new GeoLocation(lat, lon)
-    this.elevation = elevation
+    this.elevation = Number(elevation)
     this.name = name
   }
 }

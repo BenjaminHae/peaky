@@ -42,4 +42,15 @@ export default class OsmMapper {
     }
     return null
   }
+
+  get_peaks(locations: Array<GeoLocation>): Array<Peak> {
+    const peaks: Array<Peak> = [];
+    for (let location of locations) {
+      let peak = this.get_peak_for_coordinates(location);
+      if (peak && peaks.indexOf(peak) <0 ) {
+        peaks.push(peak)
+      }
+    }
+    return peaks;
+  }
 }

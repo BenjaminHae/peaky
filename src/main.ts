@@ -10,7 +10,7 @@ async function main() {
   // test using St. Gallenkirch with a distance of 30km
   const location = new GeoLocation(47.020174, 9.978751);// St. Gallenkirch
   const max_distance = 50 * 1000;
-  const circle_precision = 720;
+  const circle_precision = 360*3;//should be divisible by 4
   
   const dataSource = new DataSource(location, max_distance)
   await dataSource.init_tileset();

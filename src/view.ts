@@ -193,7 +193,7 @@ export default class View {
   // returns a number between 0 and circle_resolution
   get_direction(location: GeoLocation): number {
     const rad = this.location.direction_to(location)
-    let dir = Math.floor((this.circle_resolution) * rad / (2 * Math.PI) )
+    let dir = - Math.floor((this.circle_resolution) * rad / (2 * Math.PI) )
     if (dir < 0) {
       dir += (this.circle_resolution);
     }

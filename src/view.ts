@@ -21,7 +21,7 @@ class DirectionalView {
        this.highest_elevation = elevation;
        this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
-       if (this.candidate && (pass - this.candidate.pass) > 1) {
+       if (this.candidate && (pass - this.candidate.pass) > 4) {
          this.add_ridge_point(this.candidate.point);
        }
        this.candidate = new RidgeCandidatePoint(new ElevatedPoint(location, elevation, distance), pass)
@@ -115,11 +115,53 @@ export default class View {
     }
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
-    for (let i = 10; i < max_pass ; i++) {
+    for (let i = 30; i < max_pass ; i++) {
       this.traverse_one_ring(i);
     }
     this.finish_directions(max_pass);
-    this.build_ridges();
+    const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
+    this.build_ridges_2(points);
+    //this.build_ridges();
+  }
+
+  find_neighbor_for_point(point: ElevatedPoint, points: Array<ElevatedPoint>) {
+    const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * 4 * 1.4 / this.circle_resolution;
+    let best_fit: ElevatedPoint | null = null;
+    let best_fit_distance = max_location_diff;
+    for (let ridge_point_index in points) {
+      const new_point = points[ridge_point_index];
+      const dist = point.location.distance_to(new_point.location);
+      if (dist < max_location_diff && dist < best_fit_distance) {
+        best_fit = new_point;
+        best_fit_distance = dist;
+      }
+    }
+    if (best_fit) {
+      const index = points.indexOf(best_fit, 0);
+      if (index > -1) {
+         points.splice(index, 1);
+      }
+    }
+    return best_fit;
+  } 
+
+  build_ridges_2(points: Array<ElevatedPoint>) {
+    this.ridges = [];
+    for (let item of points) {
+      const index = points.indexOf(item, 0);
+      if (index > -1) {
+         points.splice(index, 1);
+      }
+      const new_ridge = [new RidgePoint(item, this.get_direction(item.location))];
+      let next_point = this.find_neighbor_for_point(item, points);
+      while (next_point) {
+        new_ridge.push(new RidgePoint(next_point, this.get_direction(next_point.location)));
+        next_point = this.find_neighbor_for_point(next_point, points);
+      }
+      if (new_ridge.length > 1) {
+        this.ridges.push(new_ridge);
+      }
+    }
   }
 
   find_next_directions_ridge_connector_index(next_direction: number, point: ElevatedPoint): string|null {

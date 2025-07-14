@@ -124,14 +124,28 @@ export default class View {
     //this.build_ridges();
   }
 
+  find_minimum_point_distance(point: ElevatedPoint, points: Array<ElevatedPoint>, min_start: number): number {
+    return points.reduce(
+        (min, p) => {
+          const dist = p.location.distance_to(point.location);
+          if (dist < min && dist > 0){
+            return dist
+          }
+          else {
+            return min
+          }
+        }, 
+        min_start)
+  }
+
   find_neighbor_for_point(point: ElevatedPoint, points: Array<ElevatedPoint>) {
-    const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * 4 * 1.4 / this.circle_resolution;
+    const magic_constant = 10 * 1.4;
+    const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * magic_constant / this.circle_resolution;
     let best_fit: ElevatedPoint | null = null;
     let best_fit_distance = max_location_diff;
-    for (let ridge_point_index in points) {
-      const new_point = points[ridge_point_index];
+    for (let new_point of points) {
       const dist = point.location.distance_to(new_point.location);
-      if (dist < max_location_diff && dist < best_fit_distance) {
+      if (dist < max_location_diff && dist < best_fit_distance && this.find_minimum_point_distance(new_point, points, dist) >= dist ) {
         best_fit = new_point;
         best_fit_distance = dist;
       }

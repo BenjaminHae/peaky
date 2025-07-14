@@ -30,7 +30,7 @@ export default class OsmMapper {
         (min, p) => {
           const dist = p.location.distance_to(location);
           if (dist < min.dist){
-            return {dist: p.location.distance_to(location), item: p}
+            return {dist: dist, item: p}
           }
           else {
             return min

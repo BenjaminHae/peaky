@@ -1,7 +1,7 @@
 import GeoLocation from './geoLocation';
 import {readFileSync} from 'fs';
 
-class Peak {
+export class Peak {
   location: GeoLocation;
   elevation: number;
   name: string;
@@ -28,6 +28,9 @@ export default class OsmMapper {
      
     const last_element = near_peaks.reduce(
         (min, p) => {
+          if ((p.name == null) || (p.name === undefined)){
+            return min
+          }
           const dist = p.location.distance_to(location);
           if (dist < min.dist){
             return {dist: dist, item: p}

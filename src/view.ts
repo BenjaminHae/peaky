@@ -76,7 +76,7 @@ export class RidgePoint{
 }
 
 // indexed by directions
-type Ridge = Array<RidgePoint>
+export type Ridge = Array<RidgePoint>
 
 function delete_from_array(myArray: Array<any>, key: string) {
   const index = myArray.indexOf(key, 0);
@@ -94,7 +94,7 @@ export default class View {
   directions: DirectionalView[];
   ridges: Ridge[];
   
-  data_steps = 90;//when stepping one px in the elevation file we pass 90m
+  data_steps = 30;//when stepping one px in the elevation file we pass 30m, depends on the srtm files in use
   data_source: { get_elevation(lat, lon: number) };
   location: GeoLocation;
   elevation: number;
@@ -120,8 +120,7 @@ export default class View {
     }
     this.finish_directions(max_pass);
     const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
-    this.build_ridges_2(points);
-    //this.build_ridges();
+    this.build_ridges(points);
   }
 
   find_minimum_point_distance(point: ElevatedPoint, points: Array<ElevatedPoint>, min_start: number): number {
@@ -159,7 +158,7 @@ export default class View {
     return best_fit;
   } 
 
-  build_ridges_2(points: Array<ElevatedPoint>) {
+  build_ridges(points: Array<ElevatedPoint>) {
     this.ridges = [];
     for (let item of points) {
       const index = points.indexOf(item, 0);
@@ -178,70 +177,6 @@ export default class View {
     }
   }
 
-  find_next_directions_ridge_connector_index(next_direction: number, point: ElevatedPoint): string|null {
-    //todo, the acceptable maximum distance must also depend on the distance of the points to the current center location
-    const max_height_diff = 200;
-    //const max_location_diff = 500;
-    // allow a distance between two points that allows for two points that are on the edges of two adjacent circle segments
-    // currently we allow for 2 times the width of the circle segment, however as one might be nearer to the center
-    // maybe we need to allow 2*sqrt(2)
-    const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * 2 * 1.4 / this.circle_resolution;
-    let best_fit: ElevatedPoint;
-    let best_fit_index: string|null = null;
-    let best_fit_distance = max_location_diff;
-    for (let ridge_point_index in this.directions[next_direction].ridges) {
-      const new_point = this.directions[next_direction].ridges[ridge_point_index];
-      if (new_point) {
-        /*if (Math.abs(point.elevation - new_point.elevation) < max_height_diff)*/ {
-          const dist = point.location.distance_to(new_point.location);
-          if (dist < max_location_diff && dist < best_fit_distance) {
-            best_fit = new_point;
-            best_fit_index = ridge_point_index;
-            best_fit_distance = dist;
-          }
-        }
-      }
-    }
-    return best_fit_index;
-  }  
-
-  //todo: connect the dots
-  // not strictly necessary at first
-  // attention: currently build_ridges deletes points from the directions!
-  build_ridges(): void {
-    this.ridges = [];
-    for (let i = 0; i < (this.circle_resolution - 1); i++) {
-      for (let start_ridge_index in this.directions[i].ridges) {
-        // starting with a point that does not yet belong to a ridge:
-        const ridge_start_point = this.directions[i].ridges[start_ridge_index]; // attention, this point is currently not deleted, even if it is part of a ridge
-        if (ridge_start_point) {
-          // find a nearby point in the next direction
-          let next_index = this.find_next_directions_ridge_connector_index(i+1, ridge_start_point)
-          if (next_index) {
-            // take this point and delete it from this directions list (so it does not appear in two ridges)
-            let next_point = this.directions[i+1].ridges[next_index];
-            //delete_from_array(this.directions[i+1].ridges, next_index);
-            // create the ridge from the first two points
-            const new_ridge = [new RidgePoint(ridge_start_point, i), new RidgePoint(next_point, i+1)];
-            // now go looking for the next pints
-            for (let search_direction = i+2; search_direction < this.circle_resolution; search_direction++) {
-              next_index = this.find_next_directions_ridge_connector_index(search_direction, next_point)
-              if (next_index) {
-                next_point = this.directions[search_direction].ridges[next_index];
-                //delete_from_array(this.directions[i+1].ridges, next_index);
-                new_ridge.push(new RidgePoint(next_point, search_direction));
-              } else {
-                break;
-              }
-            }
-            this.ridges.push(new_ridge);
-          }
-        }
-      }
-    }
-  }
-
-  //todo implement it!
   get_elevation(location: GeoLocation): number {
     return this.data_source.get_elevation(location.lat, location.lon);
   }

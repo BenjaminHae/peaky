@@ -18,7 +18,7 @@ export default class OsmMapper {
   constructor (tolerance: number) {
     const raw_json = readFileSync('./osm/export.simple.json', 'utf-8');
     const json = JSON.parse(raw_json);
-    this.data = json.map(e => new Peak(e.lon, e.lat, e.e, e.n));
+    this.data = json.map(e => new Peak(e[1], e[0], parseInt(e[2]), e[3]));
     this.tolerance = tolerance;
   }
 

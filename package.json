@@ -4,7 +4,9 @@
   "description": "Shows peaks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p .",
     "start": "npm run build && node dist/main.js",
@@ -14,7 +16,7 @@
   "license": "ISC",
   "dependencies": {
     "canvas": "^3.1.2",
-    "srtm-elevation": "^2.1.2",
+    "srtm-elevation-async": "^1.0.0",
     "typescript": "^5.8.3"
   },
   "devDependencies": {

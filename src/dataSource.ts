@@ -1,6 +1,5 @@
 import GeoLocation from './geoLocation';
-import {SyncTileSet} from 'srtm-elevation';
-//const SyncTileSet = require('srtm-elevation').SyncTileSet;
+import SyncTileSet, { SrtmStorage, LatLng } from 'srtm-elevation-async';
 
 export default class DataSource {
   tileset: SyncTileSet;
@@ -20,24 +19,12 @@ export default class DataSource {
   }
   
   async init_tileset(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.tileset = new SyncTileSet(
-        './cache/', 
-        [this.minPoint.lat, this.minPoint.lon], 
-        [this.maxPoint.lat, this.maxPoint.lon], 
-        (err) => { 
-          if (err) {
-            console.log(err); 
-            reject(err); 
-            return 
-          } 
-          resolve(); 
-        });
-    });
+    const storage = new SrtmStorage('./cache/');
+    this.tileset = new SyncTileSet(storage, new LatLng(this.minPoint.lat,this.minPoint.lon), new LatLng(this.maxPoint.lat, this.maxPoint.lon));
+    await this.tileset.init();
   }
   
   get_elevation(lat, lon: number): number {
-    const elev = this.tileset.getElevation([lat,lon]);
-    return elev;
+    return this.tileset.getElevation(new LatLng(lat,lon));
   }
 }

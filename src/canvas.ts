@@ -1,5 +1,4 @@
-import { createCanvas } from 'canvas';
-import { writeFileSync } from 'fs';
+import { Canvas as CanvasElt, createCanvas } from 'canvas';
 
 interface Point {
   x, y: number;
@@ -8,17 +7,17 @@ interface Point {
 export default class Canvas {
   width: number;
   height: number;
-  canvas: any;
-  ctx: any;
+  canvas: CanvasElt | HTMLCanvasElement;
+  ctx: CanvasRenderingContext2D;
   max_distance: number;
   scaling: number
   
-  constructor(width, height: number, scaling: number) {
+  constructor(width, height: number, scaling: number, canvas?: CanvasElt | HTMLCanvasElement) {
     this.width = width;
     this.height = height;
     this.scaling = scaling;
-    this.canvas = createCanvas(width*scaling, height);
-    this.ctx = this.canvas.getContext('2d');
+    this.canvas = canvas ? canvas : createCanvas(width*scaling, height);
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
     this.ctx.fillStyle = "white";
     this.ctx.fillRect(0, 0, width*scaling, height);
     this.ctx.fillStyle = "black";
@@ -34,7 +33,7 @@ export default class Canvas {
     //    ${Math.floor(255 - 42.5 * j)}
     //    0)`;
     this.ctx.fillStyle = "black";
-    this.ctx.fillRect(x*this.scaling,this.invert_point(y),size,size);
+    this.ctx.fillRect(x * this.scaling,this.invert_point(y),size,size);
   }
 
   startPaintPath(direction, projected_height: number) {
@@ -94,8 +93,4 @@ export default class Canvas {
     this.ctx.restore();
   }
   
-  store(path: string) {
-    const buffer = this.canvas.toBuffer('image/png')
-    writeFileSync(path, buffer)
-  }
 }

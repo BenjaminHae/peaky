@@ -1,7 +1,7 @@
 import GeoLocation from './geoLocation';
 
 class DirectionalView {
-   ridges: ElevatedPoint[]
+   ridges: ElevatedPoint[];
    central_location_elevation: number;
    highest_elevation: number;
    // rise per meter from the elevation of the central location to the point of highest elevation so far
@@ -108,7 +108,7 @@ export default class View {
   calculate_directional_view(location: GeoLocation, elevation?: number): void {
     this.location = location;
     if(!elevation) {
-      this.elevation = Math.max(this.get_elevation(this.location), 0);
+      this.elevation = Math.max(this.get_elevation(location), 0);
     }
     else {
       this.elevation = elevation;

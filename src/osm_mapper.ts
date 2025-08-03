@@ -24,7 +24,7 @@ export default class OsmMapper {
 
   get_peak_for_coordinates(location: GeoLocation): Peak|null {
     //this.data.forEach((p)=>console.log(p.location.distance_to(location)));
-    const near_peaks = this.data.filter((p)=>p.location.distance_to(location)<this.tolerance);
+    const near_peaks = this.data.filter((p)=>p.location.distance_to(location) < this.tolerance);
      
     const last_element = near_peaks.reduce(
         (min, p) => {

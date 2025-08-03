@@ -1,14 +1,15 @@
 import GeoLocation from './geoLocation';
-import SyncTileSet, { SrtmStorage, LatLng } from 'srtm-elevation-async';
+import SyncTileSet, { StorageInterface, LatLng } from 'srtm-elevation-async';
 
 export default class DataSource {
   tileset: SyncTileSet;
   maxPoint: GeoLocation;
   minPoint: GeoLocation;
   central_location: GeoLocation;
+  storage: StorageInterface;
 
   // distance is in meters
-  constructor(central_location: GeoLocation, distance: number) {
+  constructor(central_location: GeoLocation, distance: number, storage: StorageInterface) {
     this.central_location = central_location;
     this.minPoint = new GeoLocation(central_location.lat, central_location.lon);
     this.minPoint.move_lat(-distance);
@@ -16,11 +17,11 @@ export default class DataSource {
     this.maxPoint = new GeoLocation(central_location.lat, central_location.lon);
     this.maxPoint.move_lat(distance);
     this.maxPoint.move_lon(distance);
+    this.storage = storage;
   }
   
   async init_tileset(): Promise<void> {
-    const storage = new SrtmStorage('./cache/');
-    this.tileset = new SyncTileSet(storage, new LatLng(this.minPoint.lat,this.minPoint.lon), new LatLng(this.maxPoint.lat, this.maxPoint.lon));
+    this.tileset = new SyncTileSet(this.storage, new LatLng(this.minPoint.lat,this.minPoint.lon), new LatLng(this.maxPoint.lat, this.maxPoint.lon));
     await this.tileset.init();
   }
   

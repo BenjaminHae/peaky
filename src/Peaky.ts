@@ -1,5 +1,5 @@
 import GeoLocation from './geoLocation';
-import DataSource from './dataSource';
+import DataSource, { DataSourceOptions } from './dataSource';
 import { StorageInterface } from 'srtm-elevation-async';
 import View, { ElevatedPoint } from './view';
 import OsmMapper, { Peak } from './osm_mapper';
@@ -11,12 +11,12 @@ const MAGIC_MAX_TILE_LOAD_DISTANCE = 50 * 1000;
 const MAGIC_CIRCLE_PRECISION = 360 * 3;
 const MAGIC_HORIZONTAL_SCALING = 10;
 
-interface PeakyOptions {
+interface PeakyOptions extends DataSourceOptions {
   max_distance?: number;
   circle_precision?: number;
 }
 
-interface PeakyOptionsInternal {
+interface PeakyOptionsInternal extends DataSourceOptions {
   max_distance: number;
   circle_precision: number;
 }
@@ -35,7 +35,7 @@ export default class Peaky {
       circle_precision: MAGIC_CIRCLE_PRECISION
     }, options);
     this.storage = storage;
-    this.dataSource = new DataSource(location, this.options.max_distance, this.storage);
+    this.dataSource = new DataSource(location, this.options.max_distance, this.storage, this.options);
     this.peaks = [];
     this.location = location;
   }

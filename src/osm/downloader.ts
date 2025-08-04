@@ -20,7 +20,7 @@ export default class OSMDownloader {
   storage: StorageInterface;
   constructor(storage: StorageInterface, options?: OSMDownloaderOptions) {
     this.options = Object.assign({
-        provider: '/Peaks_{lat}{lng}.array.json',
+        provider: '/Peaks_{lat}{lng}.array.json.zip',
     }, options);
     this.timeout = 30000; // Global fetch timeout
     //this._httpsAgent = new https.Agent({ rejectUnauthorized: false }); // Ignore SSL certificates

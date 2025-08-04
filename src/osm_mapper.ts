@@ -72,7 +72,6 @@ export default class OsmMapper {
 
     // hier ist dieses Promise.all
     await Promise.all(tasks);
-    console.log(this.data);
   }
 
   async loadPeakTile(latLng: GeoLocation): Promise<void> {

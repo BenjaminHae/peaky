@@ -1,5 +1,7 @@
 import GeoLocation from './geoLocation';
 
+const MAGIC_MAX_HEIGHT = 8850; //mount everest 
+
 class DirectionalView {
    ridges: ElevatedPoint[];
    central_location_elevation: number;
@@ -7,12 +9,14 @@ class DirectionalView {
    // rise per meter from the elevation of the central location to the point of highest elevation so far
    highest_elevation_rise: number;
    candidate: RidgeCandidatePoint;
+   possible: boolean;
 
    constructor(central_location_elevation: number) {
      this.ridges = []
      this.highest_elevation = 0
      this.highest_elevation_rise = -1000
      this.central_location_elevation = central_location_elevation
+     this.possible = true;
    }
 
    //distance and elevation in meters
@@ -28,6 +32,16 @@ class DirectionalView {
      }
    }
 
+   check_possibility(distance: number) {
+     if (!this.possible) {
+       return false;
+     }
+     if (this.central_location_elevation + this.highest_elevation_rise * distance > MAGIC_MAX_HEIGHT) {
+       this.possible = false;
+       return false;
+     }
+     return true;
+   }
    add_ridge_point(ridge_point: ElevatedPoint): void {
      this.ridges.push(ridge_point);
      if (ridge_point.elevation > this.highest_elevation) {
@@ -117,6 +131,9 @@ export default class View {
     const max_pass = (this.visual_range/this.data_steps);
     for (let i = 30; i < max_pass ; i++) {
       this.traverse_one_ring(i);
+      if (this.directions.every(d => !d.possible)) {
+        break;
+      }
     }
     this.finish_directions(max_pass);
     const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
@@ -206,13 +223,18 @@ export default class View {
 
   check_point(location: GeoLocation, pass: number) {
     const direction = this.get_direction(location);
+    const distance = this.location.distance_to(location);
+    if (!this.directions[direction].check_possibility(distance)) {
+      return;
+    }
+
     const elevation = this.get_elevation(location)
     if (elevation > this.directions[direction].highest_elevation) {
       const new_location = new GeoLocation(location.lat, location.lon)
       this.directions[direction].add_possible_ridge_point(
         new_location, 
         elevation, 
-        this.location.distance_to(location),
+        distance,
         pass
       );
     }

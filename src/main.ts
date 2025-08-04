@@ -13,9 +13,6 @@ async function main() {
   //const location = new GeoLocation(47.079847, 9.875577);// Golm Stausee
   //const location = new GeoLocation(47.48003, 7.81705 );// Vincent
 
-  const max_distance = 50 * 1000;
-  const circle_precision = 360*3;//should be divisible by 4
-
   const storage = new SrtmStorage('./data/');
   const peaky = new Peaky(storage, location);
   await peaky.init();

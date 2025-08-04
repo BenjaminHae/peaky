@@ -1,6 +1,6 @@
 {
-  "name": "peaky",
-  "version": "0.0.1",
+  "name": "@benjaminhae/peaky",
+  "version": "0.0.2",
   "description": "Shows peaks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,15 +12,21 @@
     "start": "npm run build && node dist/main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Benjamin Häublein",
   "license": "ISC",
   "dependencies": {
     "canvas": "^3.1.2",
-    "srtm-elevation-async": "^1.0.0",
-    "srtm-elevation-async-node": "^1.0.2",
+    "srtm-elevation-async": "^1.0.4",
     "typescript": "^5.8.3"
   },
   "devDependencies": {
-    "@types/node": "^24.0.10"
+    "@eslint/js": "^9.32.0",
+    "@types/node": "^24.0.10",
+    "eslint": "^9.32.0",
+    "globals": "^16.3.0",
+    "jiti": "^2.5.1",
+    "srtm-elevation-async-node": "^1.0.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0"
   }
 }

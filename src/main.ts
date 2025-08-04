@@ -1,10 +1,7 @@
 import GeoLocation from './geoLocation';
-import DataSource from './dataSource';
-import View, {ElevatedPoint, RidgePoint} from './view';
+import {ElevatedPoint, RidgePoint} from './view';
 import { Canvas } from 'canvas';
-import OsmMapper from './osm_mapper';
 import { geoJSONtoFile }  from './geoJSON';
-import SilhouetteDrawer from './SilhouetteDrawer';
 import { writeFileSync } from 'fs';
 import { SrtmStorage } from 'srtm-elevation-async-node';
 import Peaky from './Peaky';

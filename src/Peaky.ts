@@ -49,11 +49,12 @@ export default class Peaky {
     this.view.calculate_directional_view(this.location);
   }
 
-  findPeaks() {
+  async findPeaks() {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
-    const osm_mapper = new OsmMapper(MAGIC_PEAK_TOLERANCE);
+    const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
+    await osm_mapper.init();
     this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.directions.map(d => d.ridges)).map(e=>e.location));
   }
 

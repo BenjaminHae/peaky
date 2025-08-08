@@ -9,7 +9,8 @@ import Peaky from './Peaky';
 
 async function main() {
   // test using St. Gallenkirch with a distance of 30km
-  const location = new GeoLocation(47.020174, 9.978751);// St. Gallenkirch
+  const location = new GeoLocation(49.22730, 9.14861);// BW
+  //const location = new GeoLocation(47.020174, 9.978751);// St. Gallenkirch
   //const location = new GeoLocation(47.079847, 9.875577);// Golm Stausee
   //const location = new GeoLocation(47.48003, 7.81705 );// Vincent
 

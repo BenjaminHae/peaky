@@ -4,12 +4,13 @@ import { StorageInterface } from 'srtm-elevation-async';
 import View, { ElevatedPoint } from './view';
 import OsmMapper, { Peak } from './osm_mapper';
 import Canvas from './canvas';
-import SilhouetteDrawer from './SilhouetteDrawer';
+import SilhouetteDrawer, { projected_height } from './SilhouetteDrawer';
 
 const MAGIC_PEAK_TOLERANCE = 300;
 const MAGIC_MAX_TILE_LOAD_DISTANCE = 50 * 1000;
 const MAGIC_CIRCLE_PRECISION = 360 * 3;
 const MAGIC_HORIZONTAL_SCALING = 10;
+const MAGIC_CANVAS_TOP_MARGIN = 800;
 
 interface PeakyOptions extends DataSourceOptions {
   max_distance?: number;
@@ -63,10 +64,14 @@ export default class Peaky {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
-    // todo consider perspective
+
     const min_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
     const max_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
-    return {min_height: min_height, max_height: max_height};
+/// todo ridge.distance gibt es nicht
+    const central_elevation = this.view.elevation;
+    const min_projected_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
+    const max_projected_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
+    return {min_height: min_height, max_height: max_height, min_projected_height: min_projected_height, max_projected_height: max_projected_height};
   }
 
   drawView(canvasElement?: HTMLCanvasElement) {
@@ -74,7 +79,7 @@ export default class Peaky {
       throw new Error("ridges have not been calculated yet");
     }
     const dim = this.getDimensions();
-    let height = dim.max_height - dim.min_height;
+    let height = dim.max_projected_height - dim.min_projected_height + MAGIC_CANVAS_TOP_MARGIN;
     let scaling = MAGIC_HORIZONTAL_SCALING;
     if (canvasElement) {
       height = canvasElement.height;

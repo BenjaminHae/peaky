@@ -15,11 +15,13 @@ const MAGIC_CANVAS_TOP_MARGIN = 800;
 interface PeakyOptions extends DataSourceOptions {
   max_distance?: number;
   circle_precision?: number;
+  elevation?: number;
 }
 
 interface PeakyOptionsInternal extends DataSourceOptions {
   max_distance: number;
   circle_precision: number;
+  elevation?: number;
 }
 
 export default class Peaky {
@@ -47,7 +49,7 @@ export default class Peaky {
 
   calculateRidges() {
     this.view = new View(this.dataSource, this.options.circle_precision, this.options.max_distance);
-    this.view.calculate_directional_view(this.location);
+    this.view.calculate_directional_view(this.location, this.options.elevation);
   }
 
   async findPeaks() {

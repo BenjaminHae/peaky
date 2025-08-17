@@ -1,6 +1,7 @@
 import GeoLocation from './geoLocation';
 
 const MAGIC_MAX_HEIGHT = 8850; //mount everest 
+const MAGIC_RIDGE_PASS_DISTANCE = 15;
 
 class DirectionalView {
    ridges: ElevatedPoint[];
@@ -25,7 +26,7 @@ class DirectionalView {
        this.highest_elevation = elevation;
        this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
-       if (this.candidate && (pass - this.candidate.pass) > 4) {
+       if (this.candidate && (pass - this.candidate.pass) > MAGIC_RIDGE_PASS_DISTANCE) {
          this.add_ridge_point(this.candidate.point);
        }
        this.candidate = new RidgeCandidatePoint(new ElevatedPoint(location, elevation, distance), pass)

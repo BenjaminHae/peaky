@@ -8,8 +8,8 @@ import SilhouetteDrawer, { projected_height } from './SilhouetteDrawer';
 
 const MAGIC_PEAK_TOLERANCE = 300;
 const MAGIC_MAX_TILE_LOAD_DISTANCE = 50 * 1000;
-const MAGIC_CIRCLE_PRECISION = 360 * 3;
-const MAGIC_HORIZONTAL_SCALING = 10;
+const MAGIC_CIRCLE_PRECISION = 360 * 10;
+const MAGIC_HORIZONTAL_SCALING = 1;
 const MAGIC_CANVAS_TOP_MARGIN = 800;
 
 interface PeakyOptions extends DataSourceOptions {

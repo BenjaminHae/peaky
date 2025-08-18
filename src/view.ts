@@ -83,10 +83,12 @@ class RidgeCandidatePoint {
 export class RidgePoint{
   point: ElevatedPoint;
   direction: number;
+  local_max: boolean;
   
   constructor(point: ElevatedPoint, direction: number) {
     this.point = point;
     this.direction = direction;
+    this.local_max = true;
   }
 }
 
@@ -155,7 +157,7 @@ export default class View {
         min_start)
   }
 
-  find_neighbor_for_point(point: ElevatedPoint, points: Array<ElevatedPoint>) {
+  find_neighbor_for_point(point: ElevatedPoint, points: Array<ElevatedPoint>): ElevatedPoint | null {
     const magic_constant = 10 * 1.4;
     const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * magic_constant / this.circle_resolution;
     let best_fit: ElevatedPoint | null = null;
@@ -183,10 +185,19 @@ export default class View {
       if (index > -1) {
          points.splice(index, 1);
       }
-      const new_ridge = [new RidgePoint(item, this.get_direction(item.location))];
+      let last_point = new RidgePoint(item, this.get_direction(item.location))
+      const new_ridge: Array<RidgePoint> = [last_point];
       let next_point = this.find_neighbor_for_point(item, points);
       while (next_point) {
-        new_ridge.push(new RidgePoint(next_point, this.get_direction(next_point.location)));
+        const new_ridge_point = new RidgePoint(next_point, this.get_direction(next_point.location))
+        if (next_point.elevation > last_point.point.elevation) {
+          last_point.local_max = false;
+        }
+        else {
+          new_ridge_point.local_max = false;
+        }
+        new_ridge.push(new_ridge_point);
+        last_point = new_ridge_point;
         next_point = this.find_neighbor_for_point(next_point, points);
       }
       if (new_ridge.length > 1) {

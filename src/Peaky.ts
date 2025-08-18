@@ -58,7 +58,7 @@ export default class Peaky {
     }
     const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
     await osm_mapper.init();
-    this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.directions.map(d => d.ridges)));
+    this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.ridges.map(r=> r.filter(p => p.local_max).map(rp => rp.point))));
   }
 
   //todo add perspective max_height

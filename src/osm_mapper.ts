@@ -1,6 +1,10 @@
 import GeoLocation from './geoLocation';
+import { ElevatedPoint } from './view';
 import { StorageInterface } from 'srtm-elevation-async';
 import OSMDownloader, { OSMDownloaderOptions } from './osm/downloader';
+
+const MAGIC_MAX_DISTANCE = 50 * 1000;
+const MAGIC_MAX_HEIGHT_DIFF = 100;
 
 function range(start, end: number): Array<number> {
   const a = Array.apply(0, new Array(end - start + 1));
@@ -20,11 +24,13 @@ export class Peak {
 }
 
 interface OSMOptions extends OSMDownloaderOptions {
-  max_distance?: number
+  max_distance?: number;
+  max_height_difference?: number;
 }
 
 interface OSMOptionsInternal extends OSMDownloaderOptions {
-  max_distance: number
+  max_distance: number;
+  max_height_difference: number;
 }
 
 export default class OsmMapper {
@@ -39,7 +45,8 @@ export default class OsmMapper {
 
   constructor (storage: StorageInterface, tolerance: number, central_location: GeoLocation, options: OSMOptions) {
     this.options = Object.assign({
-      max_distance: 50 * 1000
+      max_distance: MAGIC_MAX_DISTANCE,
+      max_height_difference: MAGIC_MAX_HEIGHT_DIFF
     }, options);
     this.tolerance = tolerance;
     this.storage = storage;
@@ -110,7 +117,7 @@ export default class OsmMapper {
   }
 
 
-  get_peak_for_coordinates(location: GeoLocation): Peak|null {
+  get_peak_for_coordinates(location: GeoLocation, elevation?: number): Peak|null {
     //this.data.forEach((p)=>console.log(p.location.distance_to(location)));
     const near_peaks = this.data.filter((p)=>p.location.distance_to(location) < this.tolerance);
      
@@ -120,7 +127,15 @@ export default class OsmMapper {
             return min
           }
           const dist = p.location.distance_to(location);
-          if (dist < min.dist){
+          let check_elevation = true;
+          if (elevation) {
+            check_elevation =  p.elevation !== null && Math.abs(p.elevation - elevation) < this.options.max_height_difference
+          }
+
+          if (!check_elevation) {
+            return min
+          }
+          else if (dist < min.dist){
             return {dist: dist, item: p}
           }
           else {
@@ -134,10 +149,10 @@ export default class OsmMapper {
     return null
   }
 
-  get_peaks(locations: Array<GeoLocation>): Array<Peak> {
+  get_peaks(locations: Array<ElevatedPoint>): Array<Peak> {
     const peaks: Array<Peak> = [];
     for (let location of locations) {
-      let peak = this.get_peak_for_coordinates(location);
+      let peak = this.get_peak_for_coordinates(location.location, location.elevation);
       if (peak && peaks.indexOf(peak) <0 ) {
         peaks.push(peak)
       }

@@ -6,10 +6,10 @@ import OsmMapper, { Peak } from './osm_mapper';
 import Canvas from './canvas';
 import SilhouetteDrawer, { projected_height } from './SilhouetteDrawer';
 
-const MAGIC_PEAK_TOLERANCE = 300;
+const MAGIC_PEAK_TOLERANCE = 200;
 const MAGIC_MAX_TILE_LOAD_DISTANCE = 50 * 1000;
 const MAGIC_CIRCLE_PRECISION = 360 * 10;
-const MAGIC_HORIZONTAL_SCALING = 1;
+const MAGIC_HORIZONTAL_SCALING = 2;
 const MAGIC_CANVAS_TOP_MARGIN = 800;
 
 interface PeakyOptions extends DataSourceOptions {
@@ -58,7 +58,7 @@ export default class Peaky {
     }
     const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
     await osm_mapper.init();
-    this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.directions.map(d => d.ridges)).map(e=>e.location));
+    this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.directions.map(d => d.ridges)));
   }
 
   //todo add perspective max_height

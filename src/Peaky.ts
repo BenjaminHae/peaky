@@ -24,13 +24,18 @@ interface PeakyOptionsInternal extends DataSourceOptions {
   elevation?: number;
 }
 
+export class PeakWithDistance extends Peak {
+  distance: number;
+  direction: number;
+}
+
 export default class Peaky {
   storage: StorageInterface;
   options: PeakyOptionsInternal;
   dataSource: DataSource;
   location: GeoLocation;
   view?: View;
-  peaks: Array<Peak>;
+  peaks: Array<PeakWithDistance>;
 
   constructor(storage: StorageInterface, location: GeoLocation, options?: PeakyOptions) {
     this.options = Object.assign({
@@ -56,12 +61,23 @@ export default class Peaky {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
+    const view = this.view;
     const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
     await osm_mapper.init();
-    this.peaks = osm_mapper.get_peaks(([] as Array<ElevatedPoint>).concat(...this.view.ridges.map(r=> r.filter(p => p.local_max).map(rp => rp.point))));
+    this.peaks = osm_mapper
+        .get_peaks(([] as Array<ElevatedPoint>).concat(
+             ...this.view.ridges.map(
+                 r=> r.filter(p => p.local_max)
+                      .map(rp => rp.point))
+             )
+         )
+        .map(p => {
+          (p as PeakWithDistance).direction = view.get_direction(p.location);
+          (p as PeakWithDistance).distance = view.location.distance_to(p.location);
+          return p as PeakWithDistance;
+        });
   }
 
-  //todo add perspective max_height
   getDimensions() {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
@@ -76,12 +92,15 @@ export default class Peaky {
     return {min_height: min_height, max_height: max_height, min_projected_height: min_projected_height, max_projected_height: max_projected_height};
   }
 
-  drawView(canvasElement?: HTMLCanvasElement) {
+  drawView(canvasElement?: HTMLCanvasElement, with_peaks: boolean = true) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
     const dim = this.getDimensions();
-    let height = dim.max_projected_height - dim.min_projected_height + MAGIC_CANVAS_TOP_MARGIN;
+    let height = dim.max_projected_height - dim.min_projected_height
+    if (with_peaks) {
+     height += MAGIC_CANVAS_TOP_MARGIN;
+    }
     let scaling = MAGIC_HORIZONTAL_SCALING;
     if (canvasElement) {
       height = canvasElement.height;
@@ -95,10 +114,10 @@ export default class Peaky {
     canvas.paintDirection("S", 2/4 * this.options.circle_precision);
     canvas.paintDirection("W", 3/4 * this.options.circle_precision);
     const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation);
-    for (let peak of this.peaks) {
-      const dir = this.view.get_direction(peak.location);
-      const dist = this.view.location.distance_to(peak.location);
-      silhouetteDrawer.draw_peak(peak, dir, dist);
+    if (with_peaks) {
+      for (let peak of this.peaks) {
+        silhouetteDrawer.draw_peak(peak, peak.direction, peak.distance);
+      }
     }
  
   //for (let i=0; i< circle_precision; i++) {

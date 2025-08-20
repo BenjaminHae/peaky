@@ -3,7 +3,7 @@ import { ElevatedPoint, Ridge, RidgePoint } from './view';
 import { Peak } from './osm_mapper';
 
 const MAGIC_PROJECTION_DISTANCE = 2000;
-const MAGIC_HORIZON_OFFSET = 500;
+const MAGIC_HORIZON_OFFSET = 800;
 
 export default class SilhouetteDrawer {
   canvas: Canvas;
@@ -11,7 +11,7 @@ export default class SilhouetteDrawer {
   direction_resolution: number;
   top_offset: number;
 
-  constructor(canvas: Canvas, central_height: number, direction_resolution: number = 360, top_offset: number = 200) {
+  constructor(canvas: Canvas, central_height: number, direction_resolution: number = 360, top_offset: number = MAGIC_HORIZON_OFFSET) {
     this.canvas = canvas;
     this.central_height = central_height;
     this.direction_resolution = direction_resolution;
@@ -19,7 +19,7 @@ export default class SilhouetteDrawer {
   }
 
   projected_height(distance, height: number): number {
-    return projected_height(this.central_height, distance, height);
+    return projected_height(this.central_height, distance, height, this.top_offset);
   }
 
   projected_height_from_point(point: RidgePoint): number {

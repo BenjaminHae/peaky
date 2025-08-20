@@ -52,6 +52,6 @@ export default class SilhouetteDrawer {
   }
 }
 
-export function projected_height(central_height, distance, height: number): number {
-  return (height - central_height)/distance * MAGIC_PROJECTION_DISTANCE + MAGIC_HORIZON_OFFSET
+export function projected_height(central_height, distance, height: number, horizon_offset: number = MAGIC_HORIZON_OFFSET): number {
+  return (height - central_height)/distance * MAGIC_PROJECTION_DISTANCE + horizon_offset
 }

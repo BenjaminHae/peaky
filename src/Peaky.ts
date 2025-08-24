@@ -85,11 +85,16 @@ export default class Peaky {
 
     const min_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
     const max_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
-/// todo ridge.distance gibt es nicht
     const central_elevation = this.view.elevation;
     const min_projected_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
     const max_projected_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
-    return {min_height: min_height, max_height: max_height, min_projected_height: min_projected_height, max_projected_height: max_projected_height};
+    return { 
+      min_height: min_height, 
+      max_height: max_height, 
+      min_projected_height: min_projected_height, 
+      max_projected_height: max_projected_height, 
+      circle_precision: this.options.circle_precision 
+    };
   }
 
   drawView(canvasElement?: HTMLCanvasElement, with_peaks: boolean = true) {

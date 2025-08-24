@@ -12,7 +12,7 @@ const MAGIC_CIRCLE_PRECISION = 360 * 10;
 const MAGIC_HORIZONTAL_SCALING = 2;
 const MAGIC_CANVAS_TOP_MARGIN = 800;
 
-interface PeakyOptions extends DataSourceOptions {
+export interface PeakyOptions extends DataSourceOptions {
   max_distance?: number;
   circle_precision?: number;
   elevation?: number;

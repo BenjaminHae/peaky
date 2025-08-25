@@ -149,13 +149,15 @@ export default class OsmMapper {
     return null
   }
 
-  get_peaks(locations: Array<ElevatedPoint>): Array<Peak> {
+  get_peaks(locations: Array<ElevatedPoint>, cb: (n: number) => void): Array<Peak> {
     const peaks: Array<Peak> = [];
+    let progress = 0;
     for (let location of locations) {
       let peak = this.get_peak_for_coordinates(location.location, location.elevation);
       if (peak && peaks.indexOf(peak) <0 ) {
         peaks.push(peak)
       }
+      cb(++progress);
     }
     return peaks;
   }

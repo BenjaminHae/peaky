@@ -29,6 +29,18 @@ export class PeakWithDistance extends Peak {
   direction: number;
 }
 
+interface Status {
+  state_no: number;
+  state_max: number;
+  sub?: string;
+  sub_no?: number;
+  sub_max?: number;
+}
+
+export const StatusMap = ["not started" , "loading_files" , "identifying local maxima" , "connecting ridges" , "identifying peaks" , "finished"];
+
+type StatusListener = (s: Status) => void;
+
 export default class Peaky {
   storage: StorageInterface;
   options: PeakyOptionsInternal;
@@ -36,6 +48,11 @@ export default class Peaky {
   location: GeoLocation;
   view?: View;
   peaks: Array<PeakWithDistance>;
+  statusListener: Array<StatusListener> = [];
+  status: Status = {
+    state_no: 0,
+    state_max: StatusMap.length
+  }
 
   constructor(storage: StorageInterface, location: GeoLocation, options?: PeakyOptions) {
     this.options = Object.assign({
@@ -49,33 +66,64 @@ export default class Peaky {
   }
 
   async init() {
+    this.setStatus({state_no: 1});
     await this.dataSource.init_tileset();
   }
 
+  setStatus({state_no = this.status.state_no, state_max = StatusMap.length, sub = undefined, sub_no = undefined, sub_max = undefined}: any ) {//todo type!
+    //trick so I can just set sub_no
+    if (state_no === this.status.state_no) {
+      if (!sub) {
+        sub = this.status.sub;
+      }
+      if (!sub_max) {
+        sub_max = this.status.sub_max;
+      }
+    }
+    this.status = {state_no, state_max, sub, sub_no, sub_max};
+    this.statusListener.forEach((l) => {new Promise<void>((r) => {l(this.status); r();})});
+  }
+
   calculateRidges() {
+    this.setStatus({state_no: 2});
     this.view = new View(this.dataSource, this.options.circle_precision, this.options.max_distance);
-    this.view.calculate_directional_view(this.location, this.options.elevation);
+    const cb = (current, max) => {
+      this.setStatus({sub_no: current, sub_max: max});
+    }
+    this.view.calculate_directional_view(this.location, this.options.elevation, cb);
   }
 
   async findPeaks() {
+    this.setStatus({state_no: 4});
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
     const view = this.view;
     const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
     await osm_mapper.init();
-    this.peaks = osm_mapper
-        .get_peaks(([] as Array<ElevatedPoint>).concat(
+    // just all ridges that have been painted combined
+    const possible_peak_points = ([] as Array<ElevatedPoint>).concat(
              ...this.view.ridges.map(
                  r=> r.filter(p => p.local_max)
                       .map(rp => rp.point))
-             )
+             );
+    this.setStatus({sub_no: 0, sub_max:possible_peak_points.length});
+    const cb = (current) => {
+      this.setStatus({sub_no: current});
+      console.log(`${current}/${possible_peak_points.length}`);
+    }
+    cb(0);
+    this.peaks = osm_mapper
+        .get_peaks(
+             possible_peak_points,
+             cb
          )
         .map(p => {
           (p as PeakWithDistance).direction = view.get_direction(p.location);
           (p as PeakWithDistance).distance = view.location.distance_to(p.location);
           return p as PeakWithDistance;
         });
+    this.setStatus({state_no: 5});
   }
 
   getDimensions() {
@@ -136,5 +184,9 @@ export default class Peaky {
       //canvas.paintLine(item.map(point => { return {x: point.direction, y: point.point.elevation-min_height}}));
     }
     return canvas.canvas;
+  }
+
+  subscribeStatus(listener: StatusListener) {
+    this.statusListener.push(listener);
   }
 }

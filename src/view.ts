@@ -2,6 +2,7 @@ import GeoLocation from './geoLocation';
 
 const MAGIC_MAX_HEIGHT = 8850; //mount everest 
 const MAGIC_RIDGE_PASS_DISTANCE = 15;
+const MAGIC_STARTING_PASS = 30;
 
 class DirectionalView {
    ridges: ElevatedPoint[];
@@ -102,6 +103,8 @@ function delete_from_array(myArray: Array<any>, key: string) {
   }
 }
 
+const calc_steps = (min, max: number) => 4*(max - min + 1)*(max+ min)
+
 
 export default class View {
   // will be multiplied by 4 to separate the circle into sectors
@@ -122,7 +125,7 @@ export default class View {
     this.data_source = data_source;
   }
 
-  calculate_directional_view(location: GeoLocation, elevation?: number): void {
+  calculate_directional_view(location: GeoLocation, elevation?: number, callback?: (min,max:number)=>void): void {
     this.location = location;
     if(!elevation) {
       this.elevation = Math.max(this.get_elevation(location), 0);
@@ -132,13 +135,25 @@ export default class View {
     }
     this.init_directions()
     const max_pass = (this.visual_range/this.data_steps);
-    for (let i = 30; i < max_pass ; i++) {
+    // just for status callback, number of total checks
+    const MAX_NUMBER = calc_steps(MAGIC_STARTING_PASS, Math.floor(max_pass));
+    
+    const do_callback = (step) => {
+      if (callback) {
+        callback(step, MAX_NUMBER);
+      }
+    }
+    do_callback(0);
+
+    for (let i = MAGIC_STARTING_PASS; i < max_pass ; i++) {
       this.traverse_one_ring(i);
       if (this.directions.every(d => !d.possible)) {
         break;
       }
+      do_callback(calc_steps(MAGIC_STARTING_PASS, i));
     }
-    this.finish_directions(max_pass);
+    this.finish_directions(Math.floor(max_pass));
+    do_callback(MAX_NUMBER);
     const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
     this.build_ridges(points);
   }

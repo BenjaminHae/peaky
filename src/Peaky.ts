@@ -87,8 +87,13 @@ export default class Peaky {
   calculateRidges() {
     this.setStatus({state_no: 2});
     this.view = new View(this.dataSource, this.options.circle_precision, this.options.max_distance);
-    const cb = (current, max) => {
-      this.setStatus({sub_no: current, sub_max: max});
+    const cb = (job, current, max) => {
+      if (job === "ridges") {
+        this.setStatus({state_no: 3, sub_no: current, sub_max: max});
+      }
+      else {
+        this.setStatus({sub_no: current, sub_max: max});
+      }
     }
     this.view.calculate_directional_view(this.location, this.options.elevation, cb);
   }
@@ -110,7 +115,6 @@ export default class Peaky {
     this.setStatus({sub_no: 0, sub_max:possible_peak_points.length});
     const cb = (current) => {
       this.setStatus({sub_no: current});
-      console.log(`${current}/${possible_peak_points.length}`);
     }
     cb(0);
     this.peaks = osm_mapper
@@ -145,14 +149,14 @@ export default class Peaky {
     };
   }
 
-  drawView(canvasElement?: HTMLCanvasElement, with_peaks: boolean = true) {
+  drawView(canvasElement?: HTMLCanvasElement, with_peaks: boolean = true, options: { horizon_offset: number} = { horizon_offset: MAGIC_CANVAS_TOP_MARGIN} ) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
     const dim = this.getDimensions();
     let height = dim.max_projected_height - dim.min_projected_height
     if (with_peaks) {
-     height += MAGIC_CANVAS_TOP_MARGIN;
+     height += options.horizon_offset;
     }
     let scaling = MAGIC_HORIZONTAL_SCALING;
     if (canvasElement) {
@@ -166,8 +170,9 @@ export default class Peaky {
     canvas.paintDirection("O", 1/4 * this.options.circle_precision);
     canvas.paintDirection("S", 2/4 * this.options.circle_precision);
     canvas.paintDirection("W", 3/4 * this.options.circle_precision);
-    const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation);
+    const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation, this.options.circle_precision, with_peaks? options.horizon_offset : 0);
     if (with_peaks) {
+      console.log("drawing peaks");
       for (let peak of this.peaks) {
         silhouetteDrawer.draw_peak(peak, peak.direction, peak.distance);
       }

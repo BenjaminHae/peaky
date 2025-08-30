@@ -125,7 +125,7 @@ export default class View {
     this.data_source = data_source;
   }
 
-  calculate_directional_view(location: GeoLocation, elevation?: number, callback?: (min,max:number)=>void): void {
+  calculate_directional_view(location: GeoLocation, elevation?: number, callback?: (job, min, max:number)=>void): void {
     this.location = location;
     if(!elevation) {
       this.elevation = Math.max(this.get_elevation(location), 0);
@@ -140,7 +140,7 @@ export default class View {
     
     const do_callback = (step) => {
       if (callback) {
-        callback(step, MAX_NUMBER);
+        callback("local_max",step, MAX_NUMBER);
       }
     }
     do_callback(0);
@@ -155,7 +155,16 @@ export default class View {
     this.finish_directions(Math.floor(max_pass));
     do_callback(MAX_NUMBER);
     const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
-    this.build_ridges(points);
+
+    const MAX_POINTS = points.length;
+    
+    const do_callback_ridge = (step) => {
+      if (callback) {
+        callback("ridges", step, MAX_POINTS);
+      }
+    }
+    do_callback_ridge(0);
+    this.build_ridges(points, do_callback_ridge);
   }
 
   find_minimum_point_distance(point: ElevatedPoint, points: Array<ElevatedPoint>, min_start: number): number {
@@ -193,9 +202,13 @@ export default class View {
     return best_fit;
   } 
 
-  build_ridges(points: Array<ElevatedPoint>) {
+  build_ridges(points: Array<ElevatedPoint>, cb?: (step: number) => void) {
     this.ridges = [];
+    let step = 0;
     for (let item of points) {
+      if (cb) {
+        cb(++step);
+      }
       const index = points.indexOf(item, 0);
       if (index > -1) {
          points.splice(index, 1);
@@ -204,6 +217,9 @@ export default class View {
       const new_ridge: Array<RidgePoint> = [last_point];
       let next_point = this.find_neighbor_for_point(item, points);
       while (next_point) {
+        if (cb) {
+          cb(++step);
+        }
         const new_ridge_point = new RidgePoint(next_point, this.get_direction(next_point.location))
         if (next_point.elevation > last_point.point.elevation) {
           last_point.local_max = false;

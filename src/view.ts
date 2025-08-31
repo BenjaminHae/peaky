@@ -23,7 +23,7 @@ class DirectionalView {
 
    //distance and elevation in meters
    add_possible_ridge_point(location, elevation, distance, pass: number): void {
-     if ((this.central_location_elevation + this.highest_elevation_rise * distance) < elevation) {
+     if ((this.highest_elevation < elevation) && (this.central_location_elevation + this.highest_elevation_rise * distance) < elevation) {
        this.highest_elevation = elevation;
        this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint

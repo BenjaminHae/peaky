@@ -29,7 +29,7 @@ export class PeakWithDistance extends Peak {
   direction: number;
 }
 
-interface Status {
+export interface Status {
   state_no: number;
   state_max: number;
   sub?: string;

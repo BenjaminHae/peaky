@@ -7,12 +7,12 @@ interface Point {
 export default class Canvas {
   width: number;
   height: number;
-  canvas: CanvasElt | HTMLCanvasElement;
+  canvas: CanvasElt | HTMLCanvasElement | OffscreenCanvas;
   ctx: CanvasRenderingContext2D;
   max_distance: number;
   scaling: number
   
-  constructor(width, height: number, scaling: number, canvas?: CanvasElt | HTMLCanvasElement) {
+  constructor(width, height: number, scaling: number, canvas?: CanvasElt | HTMLCanvasElement | OffscreenCanvas) {
     this.width = width;
     this.height = height;
     this.scaling = scaling;

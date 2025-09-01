@@ -149,7 +149,7 @@ export default class Peaky {
     };
   }
 
-  drawView(canvasElement?: HTMLCanvasElement, with_peaks: boolean = true, options: { horizon_offset: number} = { horizon_offset: MAGIC_CANVAS_TOP_MARGIN} ) {
+  drawView(canvasElement?: HTMLCanvasElement | OffscreenCanvas, with_peaks: boolean = true, options: { horizon_offset: number} = { horizon_offset: MAGIC_CANVAS_TOP_MARGIN} ) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }

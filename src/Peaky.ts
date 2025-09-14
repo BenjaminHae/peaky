@@ -135,11 +135,11 @@ export default class Peaky {
       throw new Error("ridges have not been calculated yet");
     }
 
-    const min_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>ridge.elevation))))
-    const max_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>ridge.elevation))))
+    const min_height = Math.min(...this.view.ridges.map((ridge) => Math.min(...ridge.map((point)=>point.point.elevation))));
+    const max_height = Math.max(...this.view.ridges.map((ridge) => Math.max(...ridge.map((point)=>point.point.elevation))));
     const central_elevation = this.view.elevation;
-    const min_projected_height = Math.min(...this.view.directions.map((dir) => Math.min(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
-    const max_projected_height = Math.max(...this.view.directions.map((dir) => Math.max(...dir.ridges.map((ridge)=>projected_height(central_elevation, ridge.distance_to_central_location, ridge.elevation)))));
+    const min_projected_height = Math.min(...this.view.ridges.map((ridge) => Math.min(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation)))));
+    const max_projected_height = Math.max(...this.view.ridges.map((ridge) => Math.max(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation)))));
     return { 
       min_height: min_height, 
       max_height: max_height, 

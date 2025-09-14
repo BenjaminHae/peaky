@@ -5,7 +5,7 @@ const MAGIC_RIDGE_PASS_DISTANCE = 15;
 const MAGIC_STARTING_PASS = 30;
 
 class DirectionalView {
-   ridges: ElevatedPoint[];
+   ridges: RidgeCandidatePoint[];
    central_location_elevation: number;
    highest_elevation: number;
    // rise per meter from the elevation of the central location to the point of highest elevation so far
@@ -28,32 +28,39 @@ class DirectionalView {
        this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
        if (this.candidate && (pass - this.candidate.pass) > MAGIC_RIDGE_PASS_DISTANCE) {
-         this.add_ridge_point(this.candidate.point);
+         this.add_ridge_point(this.candidate);
        }
        this.candidate = new RidgeCandidatePoint(new ElevatedPoint(location, elevation, distance), pass)
      }
+   }
+
+   // calculates the minimal height a point must have to be visible from the central location
+   // while taking previous points into account
+   // possible todo: subtract earths curvature
+   min_visible_elevation(distance: number) {
+     return this.central_location_elevation + this.highest_elevation_rise * distance 
    }
 
    check_possibility(distance: number) {
      if (!this.possible) {
        return false;
      }
-     if (this.central_location_elevation + this.highest_elevation_rise * distance > MAGIC_MAX_HEIGHT) {
+     if ( this.min_visible_elevation(distance) > MAGIC_MAX_HEIGHT) {
        this.possible = false;
        return false;
      }
      return true;
    }
-   add_ridge_point(ridge_point: ElevatedPoint): void {
+   add_ridge_point(ridge_point: RidgeCandidatePoint): void {
      this.ridges.push(ridge_point);
-     if (ridge_point.elevation > this.highest_elevation) {
-       this.highest_elevation = ridge_point.elevation;
+     if (ridge_point.point.elevation > this.highest_elevation) {
+       this.highest_elevation = ridge_point.point.elevation;
      }
    }
    
    capture_last_ridge(pass: number): void {
      if (this.candidate && (pass - this.candidate.pass) > 1) {
-       this.add_ridge_point(this.candidate.point);
+       this.add_ridge_point(this.candidate);
      }
    }
 }
@@ -153,10 +160,24 @@ export default class View {
       do_callback(calc_steps(MAGIC_STARTING_PASS, i));
     }
     this.finish_directions(Math.floor(max_pass));
+    
     do_callback(MAX_NUMBER);
-    const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
+    //const points: Array<ElevatedPoint> = ([] as Array<ElevatedPoint>).concat(...this.directions.map(d=>d.ridges));
+    const points_by_pass: Array<Array<ElevatedPoint>> = [];
+    for (let dir of this.directions) {
+      for (let item of dir.ridges) {
+        const pass = item.pass;
+        if (points_by_pass[pass] === undefined) {
+          points_by_pass[pass] = [];
+        }
+        points_by_pass[pass].push(item.point);
+      }
+    }
 
-    const MAX_POINTS = points.length;
+    const MAX_POINTS = points_by_pass.reduce(
+      (accumulator, pass) => accumulator + pass.length,
+      0
+    );
     
     const do_callback_ridge = (step) => {
       if (callback) {
@@ -164,11 +185,14 @@ export default class View {
       }
     }
     do_callback_ridge(0);
-    this.build_ridges(points, do_callback_ridge);
+    this.build_ridges(points_by_pass, do_callback_ridge);
   }
 
-  find_minimum_point_distance(point: ElevatedPoint, points: Array<ElevatedPoint>, min_start: number): number {
-    return points.reduce(
+  find_minimum_point_distance_for_pass(point: ElevatedPoint, points_by_pass: Array<Array<ElevatedPoint>>, min_start: number, pass: number) {
+    if (points_by_pass[pass] === undefined) {
+      return min_start;
+    }
+    return points_by_pass[pass].reduce(
         (min, p) => {
           const dist = p.location.distance_to(point.location);
           if (dist < min && dist > 0){
@@ -181,58 +205,79 @@ export default class View {
         min_start)
   }
 
-  find_neighbor_for_point(point: ElevatedPoint, points: Array<ElevatedPoint>): ElevatedPoint | null {
+  find_minimum_point_distance(point: ElevatedPoint, points_by_pass: Array<Array<ElevatedPoint>>, min_start: number, pass: number): number {
+    return Math.min(
+      this.find_minimum_point_distance_for_pass(point, points_by_pass, min_start, pass - 1 ),
+      this.find_minimum_point_distance_for_pass(point, points_by_pass, min_start, pass ),
+      this.find_minimum_point_distance_for_pass(point, points_by_pass, min_start, pass + 1 )
+    );
+  }
+
+  find_neighbor_for_point(point: ElevatedPoint, points_by_pass: Array<Array<ElevatedPoint>>, pass: number): ElevatedPoint | null {
     const magic_constant = 10 * 1.4;
     const max_location_diff = (point.distance_to_central_location * Math.PI * 2) * magic_constant / this.circle_resolution;
     let best_fit: ElevatedPoint | null = null;
     let best_fit_distance = max_location_diff;
-    for (let new_point of points) {
-      const dist = point.location.distance_to(new_point.location);
-      if (dist < max_location_diff && dist < best_fit_distance && this.find_minimum_point_distance(new_point, points, dist) >= dist ) {
-        best_fit = new_point;
-        best_fit_distance = dist;
+    let best_fit_pass: number | null = null;
+    for (let possible_pass = pass - 1; possible_pass <= pass + 1; possible_pass++) {
+      if (points_by_pass[possible_pass] === undefined) {
+        continue;
+      }
+      for (let new_point of points_by_pass[possible_pass]) {
+        const dist = point.location.distance_to(new_point.location);
+        if (dist < max_location_diff && dist < best_fit_distance && this.find_minimum_point_distance(new_point, points_by_pass, dist, possible_pass) >= dist ) {
+          best_fit = new_point;
+          best_fit_distance = dist;
+          best_fit_pass = possible_pass;
+        }
       }
     }
-    if (best_fit) {
-      const index = points.indexOf(best_fit, 0);
+    if (best_fit && best_fit_pass) {
+      const index = points_by_pass[best_fit_pass].indexOf(best_fit, 0);
       if (index > -1) {
-         points.splice(index, 1);
+         points_by_pass[best_fit_pass].splice(index, 1);
       }
     }
     return best_fit;
   } 
 
-  build_ridges(points: Array<ElevatedPoint>, cb?: (step: number) => void) {
+  build_ridges(points_by_pass: Array<Array<ElevatedPoint>>, cb?: (step: number) => void) {
+    const MAX_POINTS = points_by_pass.reduce(
+      (accumulator, pass) => accumulator + pass.length,
+      0
+    );
     this.ridges = [];
     let step = 0;
-    for (let item of points) {
-      if (cb) {
-        cb(++step);
-      }
-      const index = points.indexOf(item, 0);
-      if (index > -1) {
-         points.splice(index, 1);
-      }
-      let last_point = new RidgePoint(item, this.get_direction(item.location))
-      const new_ridge: Array<RidgePoint> = [last_point];
-      let next_point = this.find_neighbor_for_point(item, points);
-      while (next_point) {
+    for (let pass in points_by_pass) {
+      for (let item of points_by_pass[pass]) {
         if (cb) {
           cb(++step);
         }
-        const new_ridge_point = new RidgePoint(next_point, this.get_direction(next_point.location))
-        if (next_point.elevation > last_point.point.elevation) {
-          last_point.local_max = false;
+        const index = points_by_pass[pass].indexOf(item, 0);
+        if (index > -1) {
+           points_by_pass[pass].splice(index, 1);
         }
-        else {
-          new_ridge_point.local_max = false;
+        let last_point = new RidgePoint(item, this.get_direction(item.location))
+        const new_ridge: Array<RidgePoint> = [last_point];
+        let next_point = this.find_neighbor_for_point(item, points_by_pass, parseInt(pass));
+        while (next_point) {
+          if (cb) {
+            cb(++step);
+          }
+          const new_ridge_point = new RidgePoint(next_point, this.get_direction(next_point.location))
+          if (next_point.elevation > last_point.point.elevation) {
+            last_point.local_max = false;
+          }
+          else {
+            new_ridge_point.local_max = false;
+          }
+          new_ridge.push(new_ridge_point);
+          last_point = new_ridge_point;
+          next_point = this.find_neighbor_for_point(next_point, points_by_pass, parseInt(pass));
         }
-        new_ridge.push(new_ridge_point);
-        last_point = new_ridge_point;
-        next_point = this.find_neighbor_for_point(next_point, points);
-      }
-      if (new_ridge.length > 1) {
-        this.ridges.push(new_ridge);
+        if (new_ridge.length > 1) {
+          this.ridges.push(new_ridge);
+        }
       }
     }
   }

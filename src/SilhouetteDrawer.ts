@@ -10,6 +10,7 @@ export default class SilhouetteDrawer {
   central_height: number;
   direction_resolution: number;
   top_offset: number;
+  min_projected_height: number = 0;
 
   constructor(canvas: Canvas, central_height: number, direction_resolution: number = 360, top_offset: number = MAGIC_HORIZON_OFFSET) {
     this.canvas = canvas;
@@ -35,12 +36,13 @@ export default class SilhouetteDrawer {
         first = true;
       }
       const projected_height = this.projected_height_from_point(item);
+      const resulting_height = projected_height /*- this.top_offset */- this.min_projected_height;
       if (first) {
-        this.canvas.startPaintPath(item.direction, projected_height - this.top_offset);
+        this.canvas.startPaintPath(item.direction, resulting_height);
         first = false;
       }
       else {
-        this.canvas.nextPaintPath(item.direction, projected_height - this.top_offset);
+        this.canvas.nextPaintPath(item.direction, resulting_height);
       }
       previous_item = item;
     }
@@ -48,7 +50,7 @@ export default class SilhouetteDrawer {
   }
 
   draw_peak(peak: Peak, direction, distance: number) {
-    this.canvas.paintPeak(peak.name, peak.elevation, this.projected_height(distance, peak.elevation) - this.top_offset, direction);
+    this.canvas.paintPeak(peak.name, peak.elevation, this.projected_height(distance, peak.elevation) /*- this.top_offset*/ - this.min_projected_height, direction);
   }
 }
 

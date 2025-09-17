@@ -130,7 +130,7 @@ export default class Peaky {
     this.setStatus({state_no: 5});
   }
 
-  getDimensions() {
+  getDimensions(horizon_offset?: number) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
@@ -138,8 +138,8 @@ export default class Peaky {
     const min_height = Math.min(...this.view.ridges.map((ridge) => Math.min(...ridge.map((point)=>point.point.elevation))));
     const max_height = Math.max(...this.view.ridges.map((ridge) => Math.max(...ridge.map((point)=>point.point.elevation))));
     const central_elevation = this.view.elevation;
-    const min_projected_height = Math.min(...this.view.ridges.map((ridge) => Math.min(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation)))));
-    const max_projected_height = Math.max(...this.view.ridges.map((ridge) => Math.max(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation)))));
+    const min_projected_height = Math.min(...this.view.ridges.map((ridge) => Math.min(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation, horizon_offset)))));
+    const max_projected_height = Math.max(...this.view.ridges.map((ridge) => Math.max(...ridge.map((point)=>projected_height(central_elevation, point.point.distance_to_central_location, point.point.elevation, horizon_offset)))));
     return { 
       min_height: min_height, 
       max_height: max_height, 
@@ -171,6 +171,7 @@ export default class Peaky {
     canvas.paintDirection("S", 2/4 * this.options.circle_precision);
     canvas.paintDirection("W", 3/4 * this.options.circle_precision);
     const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation, this.options.circle_precision, with_peaks? options.horizon_offset : 0);
+    silhouetteDrawer.min_projected_height = dim.min_projected_height;
     if (with_peaks) {
       console.log("drawing peaks");
       for (let peak of this.peaks) {

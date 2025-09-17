@@ -153,7 +153,7 @@ export default class Peaky {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
-    const dim = this.getDimensions();
+    const dim = this.getDimensions(with_peaks? options.horizon_offset : 0);
     let height = dim.max_projected_height - dim.min_projected_height
     if (with_peaks) {
      height += options.horizon_offset;

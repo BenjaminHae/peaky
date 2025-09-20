@@ -4,6 +4,12 @@ interface Point {
   x, y: number;
 }
 
+interface Colors {
+  drawing: string;
+  direction: string;
+  background: string;
+}
+
 export default class Canvas {
   width: number;
   height: number;
@@ -11,16 +17,25 @@ export default class Canvas {
   ctx: CanvasRenderingContext2D;
   max_distance: number;
   scaling: number
+  colors: Colors;
   
-  constructor(width, height: number, scaling: number, canvas?: CanvasElt | HTMLCanvasElement | OffscreenCanvas) {
+  
+  constructor(width, height: number, scaling: number, canvas?: CanvasElt | HTMLCanvasElement | OffscreenCanvas, {color_drawing="black", color_background="white", color_direction="red"} = {}) {
     this.width = width;
     this.height = height;
     this.scaling = scaling;
+    this.colors = {
+      drawing: color_drawing,
+      background: color_background,
+      direction: color_direction
+   }
+
     this.canvas = canvas ? canvas : createCanvas(width*scaling, height);
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D;
-    this.ctx.fillStyle = "white";
+    this.ctx.fillStyle = this.colors.background;
     this.ctx.fillRect(0, 0, width*scaling, height);
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = this.colors.drawing;
+    this.ctx.strokeStyle = this.colors.drawing;
   }
 
   invert_point(y: number): number {
@@ -32,12 +47,14 @@ export default class Canvas {
     //    ${Math.floor(255 - 42.5 * distance/max_distance)}
     //    ${Math.floor(255 - 42.5 * j)}
     //    0)`;
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = this.colors.drawing;
+    this.ctx.strokeStyle = this.colors.drawing;
     this.ctx.fillRect(x * this.scaling,this.invert_point(y),size,size);
   }
 
   startPaintPath(direction, projected_height: number) {
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = this.colors.drawing;
+    this.ctx.strokeStyle = this.colors.drawing;
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(direction * this.scaling, this.invert_point(projected_height));
@@ -52,7 +69,8 @@ export default class Canvas {
   }
   
   paintLine(points: Array<Point>) {
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = this.colors.drawing;
+    this.ctx.strokeStyle = this.colors.drawing;
     this.ctx.beginPath();
     this.ctx.moveTo(points[0].x * this.scaling, this.invert_point(points[0].y));
     for (let i = 1; i < points.length; i++) {
@@ -62,7 +80,8 @@ export default class Canvas {
   }
 
   paintDirection(name: string, position: number, size = 20) {
-    this.ctx.fillStyle = "red";
+    this.ctx.fillStyle = this.colors.direction;
+    this.ctx.strokeStyle = this.colors.direction;
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(position * this.scaling, 0);
@@ -78,7 +97,8 @@ export default class Canvas {
   }
 
   paintPeak(name: string, elevation, projected_elevation, direction: number): void {
-    this.ctx.fillStyle = "black";
+    this.ctx.fillStyle = this.colors.drawing;
+    this.ctx.strokeStyle = this.colors.drawing;
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(direction * this.scaling, this.invert_point(projected_elevation));

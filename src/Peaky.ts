@@ -149,7 +149,7 @@ export default class Peaky {
     };
   }
 
-  drawView(canvasElement?: HTMLCanvasElement | OffscreenCanvas, with_peaks: boolean = true, {  horizon_offset = MAGIC_CANVAS_TOP_MARGIN, paint_direction = true } = {} ) {
+  drawView(canvasElement?: HTMLCanvasElement | OffscreenCanvas, with_peaks: boolean = true, {  horizon_offset = MAGIC_CANVAS_TOP_MARGIN, paint_direction = true, colors = undefined } = {} ) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
@@ -164,7 +164,7 @@ export default class Peaky {
       scaling = canvasElement.width / this.options.circle_precision;
     }
 
-    const canvas = new Canvas(this.options.circle_precision, height, scaling, canvasElement);
+    const canvas = new Canvas(this.options.circle_precision, height, scaling, canvasElement, colors);
 
     if (paint_direction) {
       canvas.paintDirection("N", 0);

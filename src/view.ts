@@ -1,4 +1,4 @@
-import GeoLocation from './geoLocation';
+import GeoLocation, { earth_curvature_offset } from './geoLocation';
 
 const MAGIC_MAX_HEIGHT = 8850; //mount everest 
 const MAGIC_RIDGE_PASS_DISTANCE = 15;
@@ -23,9 +23,10 @@ class DirectionalView {
 
    //distance and elevation in meters
    add_possible_ridge_point(location, elevation, distance, pass: number): void {
-     if ((this.highest_elevation < elevation) && (this.central_location_elevation + this.highest_elevation_rise * distance) < elevation) {
+     if ((this.highest_elevation < elevation) && 
+         (this.central_location_elevation + this.highest_elevation_rise * distance) < (elevation - earth_curvature_offset(distance))) {
        this.highest_elevation = elevation;
-       this.highest_elevation_rise = (elevation - this.central_location_elevation) / distance;
+       this.highest_elevation_rise = (elevation - earth_curvature_offset(distance) - this.central_location_elevation) / distance;
        // if there is a valley behind the last candidate, the last candidate was indeed a RidgePoint
        if (this.candidate && (pass - this.candidate.pass) > MAGIC_RIDGE_PASS_DISTANCE) {
          this.add_ridge_point(this.candidate);

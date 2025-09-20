@@ -149,14 +149,14 @@ export default class Peaky {
     };
   }
 
-  drawView(canvasElement?: HTMLCanvasElement | OffscreenCanvas, with_peaks: boolean = true, options: { horizon_offset: number, paint_direction: boolean} = { horizon_offset: MAGIC_CANVAS_TOP_MARGIN, paint_direction: true} ) {
+  drawView(canvasElement?: HTMLCanvasElement | OffscreenCanvas, with_peaks: boolean = true, {  horizon_offset = MAGIC_CANVAS_TOP_MARGIN, paint_direction = true } = {} ) {
     if (!this.view) {
       throw new Error("ridges have not been calculated yet");
     }
-    const dim = this.getDimensions(with_peaks? options.horizon_offset : 0);
+    const dim = this.getDimensions(with_peaks? horizon_offset : 0);
     let height = dim.max_projected_height - dim.min_projected_height
     if (with_peaks) {
-     height += options.horizon_offset;
+     height += horizon_offset;
     }
     let scaling = MAGIC_HORIZONTAL_SCALING;
     if (canvasElement) {
@@ -172,7 +172,7 @@ export default class Peaky {
       canvas.paintDirection("S", 2/4 * this.options.circle_precision);
       canvas.paintDirection("W", 3/4 * this.options.circle_precision);
     }
-    const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation, this.options.circle_precision, with_peaks? options.horizon_offset : 0);
+    const silhouetteDrawer = new SilhouetteDrawer(canvas, this.view.elevation, this.options.circle_precision, with_peaks? horizon_offset : 0);
     silhouetteDrawer.min_projected_height = dim.min_projected_height;
     if (with_peaks) {
       console.log("drawing peaks");

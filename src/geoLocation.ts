@@ -1,6 +1,12 @@
 const R = 6371;// earth radius in km
 const deg2rad = (deg) => deg * Math.PI/180; 
 
+// distance in meters > 0 and returns meters(> 0)
+export function earth_curvature_offset(d: number): number {
+  return (R*1000)*(1 - Math.cos(d/(R*1000)))
+}
+
+
 export default class GeoLocation {
   lat: number
   lon: number

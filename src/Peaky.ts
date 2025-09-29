@@ -67,7 +67,11 @@ export default class Peaky {
 
   async init() {
     this.setStatus({state_no: 1});
-    await this.dataSource.init_tileset();
+    try {
+      await this.dataSource.init_tileset();
+    } catch (cause) {
+      throw new Error("Failure downloading elevation tilesets", {cause})
+    }
   }
 
   setStatus({state_no = this.status.state_no, state_max = StatusMap.length, sub = undefined, sub_no = undefined, sub_max = undefined}: any ) {//todo type!
@@ -95,7 +99,11 @@ export default class Peaky {
         this.setStatus({sub_no: current, sub_max: max});
       }
     }
-    this.view.calculate_directional_view(this.location, this.options.elevation, cb);
+    try {
+      this.view.calculate_directional_view(this.location, this.options.elevation, cb);
+    } catch (cause) {
+      throw new Error("Failure during calculation of view", {cause})
+    }
   }
 
   async findPeaks() {
@@ -104,8 +112,17 @@ export default class Peaky {
       throw new Error("ridges have not been calculated yet");
     }
     const view = this.view;
-    const osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
-    await osm_mapper.init();
+    let osm_mapper: OsmMapper;
+    try {
+      osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
+    } catch (cause) {
+      throw new Error("Initializing OSM failed", {cause})
+    }
+    try {
+      await osm_mapper.init();
+    } catch (cause) {
+      throw new Error("Downloading OSM data failed", {cause})
+    }
     // just all ridges that have been painted combined
     const possible_peak_points = ([] as Array<ElevatedPoint>).concat(
              ...this.view.ridges.map(
@@ -117,16 +134,20 @@ export default class Peaky {
       this.setStatus({sub_no: current});
     }
     cb(0);
-    this.peaks = osm_mapper
-        .get_peaks(
-             possible_peak_points,
-             cb
-         )
-        .map(p => {
-          (p as PeakWithDistance).direction = view.get_direction(p.location);
-          (p as PeakWithDistance).distance = view.location.distance_to(p.location);
-          return p as PeakWithDistance;
-        });
+    try {
+      this.peaks = osm_mapper
+          .get_peaks(
+               possible_peak_points,
+               cb
+           )
+          .map(p => {
+            (p as PeakWithDistance).direction = view.get_direction(p.location);
+            (p as PeakWithDistance).distance = view.location.distance_to(p.location);
+            return p as PeakWithDistance;
+          });
+    } catch (cause) {
+      throw new Error("Reading peaks failed", {cause})
+    }
     this.setStatus({state_no: 5});
   }
 

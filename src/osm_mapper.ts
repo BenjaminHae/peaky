@@ -84,7 +84,11 @@ export default class OsmMapper {
   async loadPeakTile(latLng: GeoLocation): Promise<void> {
     const tileFile = getFileName(latLng);
     if(!(await this.storage.hasTile(tileFile))) {
-      await this.downloader.download(tileKey(latLng), tileFile)
+      try {
+        await this.downloader.download(tileKey(latLng), tileFile);
+      } catch(cause) {
+        throw new Error(`failed downloading ${tileFile}`,{ cause });
+      }
     }
     const raw_json = await this.storage.readTile(tileFile);
     const decoder = new TextDecoder();

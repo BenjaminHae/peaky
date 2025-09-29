@@ -41,6 +41,8 @@ export const StatusMap = ["not started" , "loading_files" , "identifying local m
 
 type StatusListener = (s: Status) => void;
 
+const generateError = (msg: string, cause: Error) => new Error(msg + '\r\n' + cause.message, {cause});
+
 export default class Peaky {
   storage: StorageInterface;
   options: PeakyOptionsInternal;
@@ -65,12 +67,13 @@ export default class Peaky {
     this.location = location;
   }
 
+
   async init() {
     this.setStatus({state_no: 1});
     try {
       await this.dataSource.init_tileset();
     } catch (cause) {
-      throw new Error("Failure downloading elevation tilesets", {cause})
+      throw generateError("Failure downloading elevation tilesets", cause)
     }
   }
 
@@ -102,7 +105,7 @@ export default class Peaky {
     try {
       this.view.calculate_directional_view(this.location, this.options.elevation, cb);
     } catch (cause) {
-      throw new Error("Failure during calculation of view", {cause})
+      throw generateError("Failure during calculation of view", cause)
     }
   }
 
@@ -116,12 +119,12 @@ export default class Peaky {
     try {
       osm_mapper = new OsmMapper(this.storage, MAGIC_PEAK_TOLERANCE, this.location, {max_distance: MAGIC_MAX_TILE_LOAD_DISTANCE});
     } catch (cause) {
-      throw new Error("Initializing OSM failed", {cause})
+      throw generateError("Initializing OSM failed", cause)
     }
     try {
       await osm_mapper.init();
     } catch (cause) {
-      throw new Error("Downloading OSM data failed", {cause})
+      throw generateError("Downloading OSM data failed", cause)
     }
     // just all ridges that have been painted combined
     const possible_peak_points = ([] as Array<ElevatedPoint>).concat(
@@ -146,7 +149,7 @@ export default class Peaky {
             return p as PeakWithDistance;
           });
     } catch (cause) {
-      throw new Error("Reading peaks failed", {cause})
+      throw generateError("Reading peaks failed", cause)
     }
     this.setStatus({state_no: 5});
   }

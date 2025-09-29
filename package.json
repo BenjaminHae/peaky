@@ -1,6 +1,6 @@
 {
   "name": "@benjaminhae/peaky",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "description": "Shows peaks",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

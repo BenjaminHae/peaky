@@ -43,6 +43,29 @@ type StatusListener = (s: Status) => void;
 
 const generateError = (msg: string, cause: Error) => new Error(msg + '\r\n' + cause.message, {cause});
 
+const rgbToHex = ({r, g, b}: {r: number, g: number, b: number}):string =>{
+  return "#" + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1);
+}
+const hexToRgb = (hex:string)=> {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  if (!result) {
+    throw new Error(` ${hex} is not a valid 6 digit html color`);
+  }
+  return {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  };
+}
+
+const color_interpolation = (distance:number, color1: {r,g,b: number}, color2: {r,g,b: number}): {r,g,b:number} => {
+  return {
+    r: color1.r + (color2.r - color1.r)*distance,
+    g: color1.g + (color2.g - color1.g)*distance,
+    b: color1.b + (color2.b - color1.b)*distance
+  }
+}
+
 export default class Peaky {
   storage: StorageInterface;
   options: PeakyOptionsInternal;
@@ -205,14 +228,13 @@ export default class Peaky {
       }
     }
  
-  //for (let i=0; i< circle_precision; i++) {
-  //  for (let item of view.directions[i].ridges) {
-  //    canvas.paintDot(i, item.elevation - min_height, 10);
-  //  }
-  //}
+    const ridge_max_distance = this.view.ridges.reduce((max, ridge) => ridge[0].point.distance_to_central_location > max ? ridge[0].point.distance_to_central_location : max, 0);
+    const ridge_min_distance = this.view.ridges.reduce((min, ridge) => ridge[0].point.distance_to_central_location < min ? ridge[0].point.distance_to_central_location : min, ridge_max_distance)
+    const ridge_color_far = (colors as any)?.color_ridge_far ? hexToRgb((colors as any).color_ridge_far) : {r:0,g:0,b:0} 
+    const ridge_color_near = (colors as any)?.color_ridge_near ? hexToRgb((colors as any).color_ridge_near) : {r:0,g:0,b:0} 
 
     for (let item of this.view.ridges) {
-      silhouetteDrawer.draw_ridge(item);
+      silhouetteDrawer.draw_ridge(item, rgbToHex(color_interpolation((item[0].point.distance_to_central_location - ridge_min_distance)/(ridge_max_distance-ridge_min_distance), ridge_color_near, ridge_color_far)));
       //canvas.paintLine(item.map(point => { return {x: point.direction, y: point.point.elevation-min_height}}));
     }
     return canvas.canvas;

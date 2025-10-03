@@ -27,7 +27,7 @@ export default class SilhouetteDrawer {
     return this.projected_height(point.point.distance_to_central_location, point.point.elevation);
   }
 
-  draw_ridge(ridge: Ridge) {
+  draw_ridge(ridge: Ridge, color?: string) {
     let first = true;
     let previous_item: RidgePoint|null = null;
     for (let item of ridge) {
@@ -38,7 +38,7 @@ export default class SilhouetteDrawer {
       const projected_height = this.projected_height_from_point(item);
       const resulting_height = projected_height /*- this.top_offset */- this.min_projected_height;
       if (first) {
-        this.canvas.startPaintPath(item.direction, resulting_height);
+        this.canvas.startPaintPath(item.direction, resulting_height, color);
         first = false;
       }
       else {

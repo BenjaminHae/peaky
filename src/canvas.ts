@@ -52,9 +52,9 @@ export default class Canvas {
     this.ctx.fillRect(x * this.scaling,this.invert_point(y),size,size);
   }
 
-  startPaintPath(direction, projected_height: number) {
-    this.ctx.fillStyle = this.colors.drawing;
-    this.ctx.strokeStyle = this.colors.drawing;
+  startPaintPath(direction, projected_height: number, color: string = this.colors.drawing) {
+    this.ctx.fillStyle = color;
+    this.ctx.strokeStyle = color;
     this.ctx.lineWidth = 3;
     this.ctx.beginPath();
     this.ctx.moveTo(direction * this.scaling, this.invert_point(projected_height));

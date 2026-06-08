@@ -16,10 +16,18 @@ export class Peak {
   location: GeoLocation;
   elevation: number;
   name: string;
+  region?: number;
   constructor(lat,lon: number, elevation: string|number, name: string) {
     this.location = new GeoLocation(lat, lon)
     this.elevation = Number(elevation)
     this.name = name
+  }
+  public static fromArray(e: Array<any>) {
+    const peak = new Peak(e[1], e[0], parseInt(e[2]), e[3])
+    if (e.length > 4) {
+      peak.region = e[4];
+    }
+    return peak;
   }
 }
 
@@ -93,7 +101,7 @@ export default class OsmMapper {
     const raw_json = await this.storage.readTile(tileFile);
     const decoder = new TextDecoder();
     const json = JSON.parse(decoder.decode(raw_json));
-    const data = json.map(e => new Peak(e[1], e[0], parseInt(e[2]), e[3]))
+    const data = json.map(e => Peak.fromArray(e))
     this.data = this.data.concat(data);
   }
 
